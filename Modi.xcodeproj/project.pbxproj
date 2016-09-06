@@ -23,6 +23,7 @@
 		C6C4FF4F1D7F34DA0039D31C /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C4FF4E1D7F34DA0039D31C /* Player.swift */; };
 		C6C4FF511D7F34E60039D31C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C6C4FF501D7F34E60039D31C /* Main.storyboard */; };
 		C6C4FF531D7F34EF0039D31C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C6C4FF521D7F34EF0039D31C /* Assets.xcassets */; };
+		C6C4FF581D7F3D870039D31C /* Launch.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C6C4FF571D7F3D870039D31C /* Launch.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -65,6 +66,7 @@
 		C6C4FF4E1D7F34DA0039D31C /* Player.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		C6C4FF501D7F34E60039D31C /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		C6C4FF521D7F34EF0039D31C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C6C4FF571D7F3D870039D31C /* Launch.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Launch.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -121,6 +123,7 @@
 				C6C4FF551D7F351E0039D31C /* Scenes */,
 				C6C4FF561D7F35360039D31C /* Helper Files */,
 				C6C4FF501D7F34E60039D31C /* Main.storyboard */,
+				C6C4FF571D7F3D870039D31C /* Launch.storyboard */,
 				C6C4FF521D7F34EF0039D31C /* Assets.xcassets */,
 				C6C4FF161D7F34550039D31C /* Info.plist */,
 			);
@@ -281,6 +284,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C6C4FF3D1D7F34800039D31C /* GameScene.sks in Resources */,
+				C6C4FF581D7F3D870039D31C /* Launch.storyboard in Resources */,
 				C6C4FF511D7F34E60039D31C /* Main.storyboard in Resources */,
 				C6C4FF491D7F34C30039D31C /* ConnectionScene.sks in Resources */,
 				C6C4FF531D7F34EF0039D31C /* Assets.xcassets in Resources */,
@@ -531,6 +535,7 @@
 				C6C4FF311D7F34550039D31C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		C6C4FF321D7F34550039D31C /* Build configuration list for PBXNativeTarget "ModiTests" */ = {
 			isa = XCConfigurationList;
@@ -539,6 +544,7 @@
 				C6C4FF341D7F34550039D31C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		C6C4FF351D7F34550039D31C /* Build configuration list for PBXNativeTarget "ModiUITests" */ = {
 			isa = XCConfigurationList;
@@ -547,6 +553,7 @@
 				C6C4FF371D7F34550039D31C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
