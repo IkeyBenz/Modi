@@ -435,74 +435,11 @@ class GameScene: SKScene {
         let wait = SKAction.waitForDuration(0.5)
         let runBlock = SKAction.runBlock(block)
         let sequence = SKAction.sequence([runBlock, wait])
-        let actionRepeat = SKAction.repeatAction(sequence, count: players)
+        let actionRepeat = SKAction.repeatAction(sequence, count: GS.orderedPlayers.count)
         self.runAction(actionRepeat)
     }
     
     func runEndOfRoundFunctions() {
-        let lowestCardRank: Int = {
-            var rank = 13
-            for player in GS.orderedPlayers {
-                if player.card.rank < rank {
-                    rank = player.card.rank
-                }
-            }
-            return rank
-        }()
-        var playersLost: [String] = []
-        for card in cardsInPlay {
-            if card.texture == card.backTexture {
-                card.flip()
-            }
-        }
-        for player in GS.orderedPlayers {
-            if player.card.rank == lowestCardRank {
-                player.lives = player.lives - 1
-                playersLost.append(player.name)
-            }
-        }
-        var lostPlayersString = ""
-        for player in playersLost {
-            lostPlayersString += player + ", "
-        }
-        if playersLost.count == 2 {
-            self.updateLabel.text = "DOUBLE OUT"
-        } else if playersLost.count > 2 {
-            self.updateLabel.text = "MULTIPLE OUT"
-        } else {
-            self.updateLabel.text = "\(playersLost[0]) lost this round."
-        }
-        
-        let waitFive = SKAction.waitForDuration(5)
-        let trashCards = SKAction.runBlock({self.sendCardsToTrash()})
-        
-        let showLeaderBoard = SKAction.runBlock({self.setUpLeaderBoard()})
-        let checkLiveCount = SKAction.runBlock({
-            for player in 0 ..< self.GS.orderedPlayers.count - 1 {
-                if self.GS.orderedPlayers[player].lives < 1 {
-                    self.GS.orderedPlayers[player].isStillInGame = false
-                }
-            }
-            for otherPlayer in 0 ..< self.playersStillInTheGame.count - 1 {
-                if self.playersStillInTheGame[otherPlayer].isStillInGame == false {
-                    self.playersStillInTheGame.removeAtIndex(otherPlayer)
-                }
-            }
-            
-            let playersInGameString: String = {
-                var str = ""
-                for player in self.playersStillInTheGame {
-                    str = str + player.name + ", "
-                }
-                return str
-            }()
-            print(playersInGameString)
-            
-            if self.playersStillInTheGame.count == 1 {
-                self.itsTheEndOfTheGame = true
-                self.runEndOfGameFunctions()
-            }
-        })
         
         let setUpForNextRound = SKAction.runBlock({
             let currentDealerIndex: Int = {
@@ -524,9 +461,71 @@ class GameScene: SKScene {
             })
             self.runAction(goIntoNextRound)
         })
-
         
-        self.runAction(SKAction.sequence([waitFive, trashCards, showLeaderBoard, checkLiveCount, setUpForNextRound]))
+        let lowestCardRank: Int = {
+            var rank = 13
+            for player in GS.orderedPlayers {
+                if player.card.rank < rank {
+                    rank = player.card.rank
+                }
+            }
+            return rank
+        }()
+        var playersLost: [String] = []
+        for card in cardsInPlay {
+            if card.texture == card.backTexture {
+                card.flip()
+            }
+        }
+        for player in playersStillInTheGame {
+            if player.card.rank == lowestCardRank {
+                player.lives = player.lives - 1
+                playersLost.append(player.name)
+            }
+        }
+        if playersLost.count == 2 {
+            self.updateLabel.text = "DOUBLE OUT"
+        } else if playersLost.count > 2 {
+            self.updateLabel.text = "MULTIPLE OUT"
+        } else {
+            self.updateLabel.text = "\(playersLost[0]) lost this round."
+        }
+        
+        let waitFive = SKAction.waitForDuration(5)
+        let trashCards = SKAction.runBlock({self.sendCardsToTrash()})
+        
+        let showLeaderBoard = SKAction.runBlock({self.setUpLeaderBoard()})
+        let checkLiveCount = SKAction.runBlock({
+            for player in 0 ..< self.playersStillInTheGame.count - 1 {
+                if self.playersStillInTheGame[player].lives < 1 {
+                    self.playersStillInTheGame[player].isStillInGame = false
+                    self.playersStillInTheGame.removeAtIndex(player)
+                }
+            }
+//            for otherPlayer in 0 ..< self.playersStillInTheGame.count - 1 {
+//                if self.playersStillInTheGame[otherPlayer].isStillInGame == false {
+//                    self.playersStillInTheGame.removeAtIndex(otherPlayer)
+//                }
+//            }
+            
+            let playersInGameString: String = {
+                var str = ""
+                for player in self.playersStillInTheGame {
+                    str = str + player.name + ", "
+                }
+                return str
+            }()
+            print(playersInGameString)
+            
+            if self.playersStillInTheGame.count == 1 {
+                self.itsTheEndOfTheGame = true
+                self.runEndOfGameFunctions()
+            } else {
+                self.runAction(setUpForNextRound)
+            }
+        })
+        
+        self.runAction(SKAction.sequence([waitFive, trashCards, showLeaderBoard, checkLiveCount]))
         
         //CHECK EACH PLAYERS LIVE COUNT, IF ANY HAVE ZERO, GIVE THEM THE BOOT
     
