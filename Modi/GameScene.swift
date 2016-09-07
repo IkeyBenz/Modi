@@ -450,8 +450,12 @@ class GameScene: SKScene {
             return rank
         }()
         var playersLost: [String] = []
+        for card in cardsInPlay {
+            if card.texture == card.backTexture {
+                card.flip()
+            }
+        }
         for player in GS.orderedPlayers {
-            player.card.texture = player.card.frontTexture
             if player.card.rank == lowestCardRank {
                 player.lives = player.lives - 1
                 playersLost.append(player.name)
@@ -461,40 +465,78 @@ class GameScene: SKScene {
         for player in playersLost {
             lostPlayersString += player + ", "
         }
-        self.updateLabel.text = "\(lostPlayersString)lost this round."
+        if playersLost.count == 2 {
+            self.updateLabel.text = "DOUBLE OUT"
+        } else if playersLost.count > 2 {
+            self.updateLabel.text = "MULTIPLE OUT"
+        } else {
+            self.updateLabel.text = "\(playersLost[0]) lost this round."
+        }
         
         let waitFive = SKAction.waitForDuration(5)
         let trashCards = SKAction.runBlock({self.sendCardsToTrash()})
         
-        self.runAction(SKAction.sequence([waitFive, trashCards]))
+        let showLeaderBoard = SKAction.runBlock({self.setUpLeaderBoard()})
+        let checkLiveCount = SKAction.runBlock({
+            for player in 0 ..< self.GS.orderedPlayers.count - 1 {
+                if self.GS.orderedPlayers[player].lives < 1 {
+                    self.GS.orderedPlayers[player].isStillInGame = false
+                }
+            }
+            for otherPlayer in 0 ..< self.playersStillInTheGame.count - 1 {
+                if self.playersStillInTheGame[otherPlayer].isStillInGame == false {
+                    self.playersStillInTheGame.removeAtIndex(otherPlayer)
+                }
+            }
+            
+            let playersInGameString: String = {
+                var str = ""
+                for player in self.playersStillInTheGame {
+                    str = str + player.name + ", "
+                }
+                return str
+            }()
+            print(playersInGameString)
+            
+            if self.playersStillInTheGame.count == 1 {
+                self.itsTheEndOfTheGame = true
+                self.runEndOfGameFunctions()
+            }
+        })
+        
+        let setUpForNextRound = SKAction.runBlock({
+            let currentDealerIndex: Int = {
+                var index: Int = 0
+                for player in 0 ..< self.playersStillInTheGame.count {
+                    if self.playersStillInTheGame[player].peerID == self.GS.currentDealer.peerID {
+                        index = player
+                    }
+                }
+                return index
+            }()
+            let nextPlayer = self.playersStillInTheGame[self.loopableIndex(currentDealerIndex + 1, range: self.GS.orderedPlayers.count)]
+            
+            self.GS.currentDealer = nextPlayer
+            let goIntoNextRound = SKAction.runBlock({
+                if self.playersStillInTheGame.count != 1 {
+                    self.runBeginingOfRoundFunctions()
+                }
+            })
+            self.runAction(goIntoNextRound)
+        })
+
+        
+        self.runAction(SKAction.sequence([waitFive, trashCards, showLeaderBoard, checkLiveCount, setUpForNextRound]))
         
         //CHECK EACH PLAYERS LIVE COUNT, IF ANY HAVE ZERO, GIVE THEM THE BOOT
     
         
         // IF EVERY PLAYER ONLY HAS 0 LIVES LEFT -> GO INTO DOUBLE GAME
         
-        let currentDealerIndex: Int = {
-            var index: Int = 0
-            for player in 0 ..< self.playersStillInTheGame.count {
-                if playersStillInTheGame[player].peerID == GS.currentDealer.peerID {
-                    index = player
-                }
-            }
-            return index
-        }()
-        let nextPlayer = playersStillInTheGame[loopableIndex(currentDealerIndex + 1, range: GS.orderedPlayers.count)]
-        
-        self.GS.currentDealer = nextPlayer
-        let waitSix = SKAction.waitForDuration(6)
-        let goIntoNextRound = SKAction.runBlock({self.runBeginingOfRoundFunctions()})
-        self.runAction(SKAction.sequence([waitSix, goIntoNextRound]))
     }
     
     func sendCardsToTrash() {
         for card in cardsInPlay {
-            if card.texture == card.backTexture {
-                card.flip()
-            }
             let seventyFiveOfDealLabel = CGRectGetMinX(dealButton.frame) + (dealButton.frame.width * 0.75)
             let fiveOfScreenHeight = self.frame.height * 0.05
             let trashPosition = CGPoint(x: seventyFiveOfDealLabel, y:  CGRectGetMaxY(dealButtonImage.frame) + fiveOfScreenHeight + (card.frame.height / 2))
@@ -508,25 +550,6 @@ class GameScene: SKScene {
             cardsInPlay.removeAtIndex(cardsInPlay.indexOf(card)!)
             cardsInTrash.append(card)
         }
-        let showLeaderBoard = SKAction.runBlock({self.setUpLeaderBoard()})
-        let checkLiveCount = SKAction.runBlock({
-            for player in 0 ..< self.GS.orderedPlayers.count - 1 {
-                if self.GS.orderedPlayers[player].lives == 0 {
-                    self.GS.orderedPlayers[player].isStillInGame = false
-                }
-            }
-            for otherPlayer in 0 ..< self.playersStillInTheGame.count - 1 {
-                if self.playersStillInTheGame[otherPlayer].isStillInGame == false {
-                    self.playersStillInTheGame.removeAtIndex(otherPlayer)
-                }
-            }
-            
-            if self.playersStillInTheGame.count == 1 {
-                self.itsTheEndOfTheGame = true
-                self.runEndOfGameFunctions()
-            }
-        })
-        self.runAction(SKAction.sequence([SKAction.waitForDuration(1.2), showLeaderBoard, checkLiveCount]))
         
         for playerLabel in playerLabels {
             playerLabel.removeFromParent()
@@ -538,6 +561,7 @@ class GameScene: SKScene {
         if  !itsTheEndOfTheGame {
             roundNubmer  = roundNubmer + 1
             roundLabel.text = "Round \(roundNubmer)"
+        
             let wait = SKAction.waitForDuration(1.5)
             let addRoundLabel = SKAction.runBlock({self.addChild(self.roundLabel)})
             let removeLabel = SKAction.runBlock({self.roundLabel.removeFromParent()})
@@ -555,7 +579,7 @@ class GameScene: SKScene {
     }
     
     func runEndOfGameFunctions() {
-        print("IT'S THE END OF THE GAME")
+        self.updateLabel.text = "\(playersStillInTheGame[0].name) WINS THE GAME!"
     }
     
     

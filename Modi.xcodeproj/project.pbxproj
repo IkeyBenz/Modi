@@ -119,9 +119,9 @@
 			children = (
 				C6C4FF381D7F346C0039D31C /* AppDelegate.swift */,
 				C6C4FF3E1D7F34940039D31C /* GameViewController.swift */,
-				C6C4FF541D7F35010039D31C /* Objects */,
-				C6C4FF551D7F351E0039D31C /* Scenes */,
 				C6C4FF561D7F35360039D31C /* Helper Files */,
+				C6C4FF551D7F351E0039D31C /* Scenes */,
+				C6C4FF541D7F35010039D31C /* Objects */,
 				C6C4FF501D7F34E60039D31C /* Main.storyboard */,
 				C6C4FF571D7F3D870039D31C /* Launch.storyboard */,
 				C6C4FF521D7F34EF0039D31C /* Assets.xcassets */,

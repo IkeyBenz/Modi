@@ -20,3 +20,11 @@ extension Int {
         return CGFloat(self) * CGFloat(M_PI) / 180
     }
 }
+
+extension Array where Element: Equatable {
+    mutating func remove(object: Element) {
+        if let index = indexOf(object) {
+            removeAtIndex(index)
+        }
+    }
+}
