@@ -287,9 +287,23 @@ class GameScene: SKScene {
     }
     
     func nextPlayerGoes() {
-        GS.bluetoothService.sendData("updateLabelIt's \(GS.orderedPlayers[loopableIndex(playerIndexOrder, range: GS.orderedPlayers.count)].name)'s turn to go.")
-        GS.bluetoothService.sendData("playersTurn\(GS.orderedPlayers[loopableIndex(playerIndexOrder, range: GS.orderedPlayers.count)].name)")
-        self.updateLabel.text = "It's \(GS.orderedPlayers[loopableIndex(playerIndexOrder, range: GS.orderedPlayers.count)].name)'s turn to go."
+        //FIGURE OUT WHO THE NEXT PLAYER STILL ALIVE IS
+        var nextPlayer: Player = GS.orderedPlayers[loopableIndex(playerIndexOrder, range: GS.orderedPlayers.count)]
+        var stopper: Bool = true
+        var x: Int = 0
+        
+        while stopper {
+            if GS.orderedPlayers[loopableIndex(playerIndexOrder + x, range: GS.orderedPlayers.count)].isStillInGame {
+                nextPlayer = GS.orderedPlayers[loopableIndex(playerIndexOrder + x, range: GS.orderedPlayers.count)]
+                stopper = false
+            } else {
+                x = x + 1
+            }
+        }
+        
+        GS.bluetoothService.sendData("updateLabelIt's \(nextPlayer.name)'s turn to go.")
+        GS.bluetoothService.sendData("playersTurn\(nextPlayer.name)")
+        self.updateLabel.text = "It's \(nextPlayer.name)'s turn to go."
     }
     
     func tradeCardWithPlayer(playerOne: Player, playerTwo: Player) {
@@ -394,7 +408,7 @@ class GameScene: SKScene {
         
         referenceCard.zRotation = 90.toRadians()
         referenceCard.position.x = centerPoint.x - radius
-        referenceCard.xScale = 0.2; referenceCard.yScale = 0.2
+        referenceCard.size = resizeCard(referenceCard)
         
         while CGRectGetMinX(referenceCard.frame) < 0 {
             radius = radius - 8
@@ -441,17 +455,26 @@ class GameScene: SKScene {
     
     func runEndOfRoundFunctions() {
         
-        let setUpForNextRound = SKAction.runBlock({
-            let currentDealerIndex: Int = {
-                var index: Int = 0
-                for player in 0 ..< self.playersStillInTheGame.count {
-                    if self.playersStillInTheGame[player].peerID == self.GS.currentDealer.peerID {
-                        index = player
-                    }
+        let currentDealerIndex: Int = {
+            var index: Int = 0
+            for player in 0 ..< self.playersStillInTheGame.count - 1{
+                if playersStillInTheGame[player].peerID == GS.currentDealer.peerID {
+                    index = player
                 }
-                return index
-            }()
-            let nextPlayer = self.playersStillInTheGame[self.loopableIndex(currentDealerIndex + 1, range: self.GS.orderedPlayers.count)]
+            }
+            return index
+        }()
+        var nextPlayer = playersStillInTheGame[loopableIndex(currentDealerIndex + 1, range: playersStillInTheGame.count)]
+        
+        let setUpForNextRound = SKAction.runBlock({
+            
+            var x = 1
+            while nextPlayer.isStillInGame == false {
+                nextPlayer = self.playersStillInTheGame[self.loopableIndex(currentDealerIndex + x, range: self.playersStillInTheGame.count)]
+                x = x + 1
+                print(nextPlayer.name)
+            }
+
             
             self.GS.currentDealer = nextPlayer
             let goIntoNextRound = SKAction.runBlock({
@@ -464,7 +487,7 @@ class GameScene: SKScene {
         
         let lowestCardRank: Int = {
             var rank = 13
-            for player in GS.orderedPlayers {
+            for player in playersStillInTheGame {
                 if player.card.rank < rank {
                     rank = player.card.rank
                 }
@@ -546,6 +569,8 @@ class GameScene: SKScene {
             card.runAction(moveToTrash)
             card.runAction(rotateToStraight)
             card.zPosition = 56 - card.zPosition
+            card.owner.card = nil
+            card.owner = nil
             cardsInPlay.removeAtIndex(cardsInPlay.indexOf(card)!)
             cardsInTrash.append(card)
         }
