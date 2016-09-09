@@ -467,7 +467,7 @@ class GameScene: SKScene {
         var nextPlayer = playersStillInTheGame[loopableIndex(currentDealerIndex + 1, range: playersStillInTheGame.count)]
         
         let setUpForNextRound = SKAction.runBlock({
-            
+            print("Even though this is in a block it already got called.")
             var x = 1
             while nextPlayer.isStillInGame == false {
                 nextPlayer = self.playersStillInTheGame[self.loopableIndex(currentDealerIndex + x, range: self.playersStillInTheGame.count)]
