@@ -47,6 +47,7 @@ class GameScene: SKScene {
         let index: Int = 0
         for x in 0 ..< GameStateSingleton.sharedInstance.orderedPlayers.count {
             if GameStateSingleton.sharedInstance.orderedPlayers[x].peerID == GameStateSingleton.sharedInstance.bluetoothService.session.myPeerID {
+                print(x + 1)
                 return x + 1
             }
         }
@@ -72,6 +73,11 @@ class GameScene: SKScene {
         playersInOrderOfLives = GS.orderedPlayers
         playersStillInTheGame = GS.orderedPlayers
         setUpLeaderBoard()
+        
+        let indexLabel = SKLabelNode(text: String(playerIndexOrder))
+        indexLabel.position = CGPoint(x: CGRectGetMidX(self.frame), y: CGRectGetMidY(self.frame))
+        indexLabel.zPosition = 11
+        self.addChild(indexLabel)
         
         
         let background = SKSpriteNode(imageNamed: "Felt")
@@ -225,14 +231,14 @@ class GameScene: SKScene {
                 self.runAction(endMyTurn)
             }
             if nodeAtPoint(touch.locationInNode(self)) == stickButton {
+                GS.bluetoothService.sendData("updateLabel\(myPlayer.name) stuck")
+                self.updateLabel.text = "\(myPlayer.name) stuck"
                 if myPlayer.peerID == GS.currentDealer.peerID {
                     self.runEndOfRoundFunctions()
                     GS.bluetoothService.sendData("endRound")
                 } else {
                     self.runAction(endMyTurn)
                 }
-                GS.bluetoothService.sendData("updateLabel\(myPlayer.name) stuck")
-                self.updateLabel.text = "\(myPlayer.name) stuck"
                 self.removePlayerOptions()
             }
             if nodeAtPoint(touch.locationInNode(self)) == tradeButton {
@@ -293,6 +299,9 @@ class GameScene: SKScene {
     }
     
     func tradeCardWithPlayer(playerOne: Player, playerTwo: Player) {
+        if playerTwo.card.rank < playerOne.card.rank {
+            runAction(SKAction.sequence([SKAction.waitForDuration(1.1), SKAction.runBlock({self.updateLabel.text = "MODI"})]))
+        }
         let temp = playerOne.card
         playerOne.card = playerTwo.card
         playerTwo.card = temp
@@ -402,7 +411,10 @@ class GameScene: SKScene {
         }
         
         let block = {
-            let angle: CGFloat = (((360 / CGFloat(self.GS.orderedPlayers.count)) * CGFloat(self.cardsInPlay.count + (2 - self.playerIndexOrder))).toRadians()) - 90.toRadians()
+            let angle: CGFloat = (((360 / CGFloat(self.GS.orderedPlayers.count)) * -CGFloat(abs(self.playerIndexOrder - self.playerLabels.count))).toRadians()) - 90.toRadians()
+            print("Amount of players: \(self.GS.orderedPlayers.count)")
+            print("\(self.myPlayer.name)'s order is: \(self.playerIndexOrder)")
+            print("Player Labels: \(self.playerLabels.count)")
             let position = CGPointMake(centerPoint.x + (cos(angle) * radius), centerPoint.y + (sin(angle) * radius))
             let actionMove = SKAction.moveTo(position, duration: 0.5)
             let actionRotate = SKAction.rotateToAngle((angle + 90.toRadians()), duration: 0.5)
@@ -411,7 +423,8 @@ class GameScene: SKScene {
             let playerLabel = SKLabelNode(fontNamed: "Chalkduster")
             let fivePercentWidth = self.frame.size.width * 0.05
             let fivePercentHeight = self.frame.size.height * 0.05
-            playerLabel.text = self.GS.orderedPlayers[self.loopableIndex(self.cardsInPlay.count + 1, range: self.GS.orderedPlayers.count)].name
+           // playerLabel.text = self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + 1, range: self.GS.orderedPlayers.count)].name
+            playerLabel.text = String(angle)
             playerLabel.fontSize = 12
             playerLabel.position = CGPointMake(position.x + (cos(angle) * ((self.deckOfCards.last!.size.width / 2) + fivePercentWidth)), position.y + (sin(angle) * ((self.deckOfCards.last!.size.height / 2) + fivePercentHeight)))
             playerLabel.zRotation = angle + 90.toRadians()
@@ -420,12 +433,12 @@ class GameScene: SKScene {
             self.playerLabels.append(playerLabel)
             
             // If the player still has lives, give him a card
-            if self.GS.orderedPlayers[self.loopableIndex(self.cardsInPlay.count + 1, range: self.GS.orderedPlayers.count)].isStillInGame {
+            if self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + 1, range: self.GS.orderedPlayers.count)].isStillInGame {
                 self.deckOfCards.last?.runAction(actionMove)
                 self.deckOfCards.last?.runAction(actionRotate)
                 self.cardsInPlay.append(self.deckOfCards.last!)
-                self.GS.orderedPlayers[self.loopableIndex(self.cardsInPlay.count, range: self.GS.orderedPlayers.count)].card = self.deckOfCards.last!
-                self.deckOfCards.last!.owner = self.GS.orderedPlayers[self.loopableIndex(self.cardsInPlay.count, range: self.GS.orderedPlayers.count)]
+                self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count, range: self.GS.orderedPlayers.count)].card = self.deckOfCards.last!
+                self.deckOfCards.last!.owner = self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count, range: self.GS.orderedPlayers.count)]
                 if self.deckOfCards.last!.owner.peerID == self.myPlayer.peerID {
                     self.runAction(SKAction.sequence([SKAction.waitForDuration(0.5), SKAction.runBlock({self.myPlayer.card.flip()})]))
                 }
