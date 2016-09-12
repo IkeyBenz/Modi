@@ -294,7 +294,7 @@ class GameScene: SKScene {
     
     func nextPlayerGoes() {
         var x: Int = 0
-        while GS.orderedPlayers[loopableIndex(playerIndexOrder, range: GS.orderedPlayers.count)].isStillInGame == false {
+        while GS.orderedPlayers[loopableIndex(playerIndexOrder + x, range: GS.orderedPlayers.count)].isStillInGame == false {
             x += 1
         }
         GS.bluetoothService.sendData("updateLabelIt's \(GS.orderedPlayers[loopableIndex(playerIndexOrder + x, range: GS.orderedPlayers.count)].name)'s turn to go.")
