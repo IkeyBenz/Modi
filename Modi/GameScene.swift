@@ -306,6 +306,9 @@ class GameScene: SKScene {
         if playerTwo.card.rank < playerOne.card.rank {
             runAction(SKAction.sequence([SKAction.waitForDuration(1.1), SKAction.runBlock({self.updateLabel.text = "MODI"})]))
         }
+        if playerTwo.card.rank == playerOne.card.rank {
+            runAction(SKAction.sequence([SKAction.waitForDuration(1.1), SKAction.runBlock({self.updateLabel.text = "Dirty Dan!"})]))
+        }
         let temp = playerOne.card
         playerOne.card = playerTwo.card
         playerTwo.card = temp
@@ -339,9 +342,12 @@ class GameScene: SKScene {
         let rotateCard1 = SKAction.rotateToAngle(card2.zRotation, duration: 0.5)
         let rotateCard2 = SKAction.rotateToAngle(card1.zRotation, duration: 0.5)
         let flip = SKAction.runBlock({
-            if self.myPlayer.card.texture == self.myPlayer.card.backTexture {
-                self.myPlayer.card.flip()
+            if card1.owner.peerID == self.myPlayer.peerID || card2.owner.peerID == self.myPlayer.peerID {
+                if self.myPlayer.card.texture == self.myPlayer.card.backTexture {
+                    self.myPlayer.card.flip()
+                }
             }
+            
         })
         
         if card1.texture == card1.frontTexture {
@@ -494,7 +500,7 @@ class GameScene: SKScene {
         
         let lowestCardRank: Int = {
             var rank = 13
-            for player in GS.orderedPlayers {
+            for player in self.playersStillInTheGame {
                 if player.card.rank < rank {
                     rank = player.card.rank
                 }
