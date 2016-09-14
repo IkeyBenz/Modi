@@ -13,12 +13,12 @@ class GameStateSingleton {
     
     
     enum GameState {
-        case WaitingForPlayers
-        case InSession
-        case GameOver
+        case waitingForPlayers
+        case inSession
+        case gameOver
     }
     
-    var currentGameState: GameState = .WaitingForPlayers
+    var currentGameState: GameState = .waitingForPlayers
     var bluetoothService: ModiBlueToothService!
     var deviceName: String = ""
     var orderedPlayers: [Player] = []

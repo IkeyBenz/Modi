@@ -76,7 +76,7 @@ class Deck {
         while cards.count > 0 {
             let rand = Int(arc4random_uniform(UInt32(cards.count)))
             temp.append(cards[rand])
-            cards.removeAtIndex(rand)
+            cards.remove(at: rand)
         }
         cards = temp
         

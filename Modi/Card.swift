@@ -9,6 +9,7 @@
 import Foundation
 import SpriteKit
 
+
 class Card: SKSpriteNode {
     
     var suit: String!
@@ -28,6 +29,7 @@ class Card: SKSpriteNode {
         self.readableRank = readableRank
         self.rank = rank
         
+        
         if suit == "Spades" {suitIndex = 1}
         if suit == "Clubs" {suitIndex = 2}
         if suit == "Hearts" {suitIndex = 3}
@@ -42,7 +44,7 @@ class Card: SKSpriteNode {
         frontTexture = SKTexture(imageNamed: prefix + "_of_" + suit)
         backTexture = SKTexture(imageNamed: "cardBack")
         
-        super.init(texture: backTexture, color: .clearColor(), size: frontTexture.size())
+        super.init(texture: backTexture, color: UIColor.clear, size: frontTexture.size())
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -55,9 +57,9 @@ class Card: SKSpriteNode {
     }
     
     func flip() {
-        let scaleDown = SKAction.scaleXTo(0, duration: 0.1)
-        let scaleUp = SKAction.scaleXTo(1, duration: 0.1)
-        let changeTexture = SKAction.runBlock({
+        let scaleDown = SKAction.scaleX(to: 0, duration: 0.1)
+        let scaleUp = SKAction.scaleX(to: 1, duration: 0.1)
+        let changeTexture = SKAction.run({
             if !self.backShowing {
                 self.texture = self.backTexture
                 self.backShowing = true
@@ -66,10 +68,10 @@ class Card: SKSpriteNode {
                 self.backShowing = false
             }
         })
-        self.runAction(SKAction.sequence([scaleDown, changeTexture, scaleUp]))
+        self.run(SKAction.sequence([scaleDown, changeTexture, scaleUp]))
     }
     
-    func showPlayerName(playerName: String) {
+    func showPlayerName(_ playerName: String) {
         ownerLabel.position = CGPoint(x: self.frame.width / 2, y: -self.frame.height)
         print(self.frame)
         ownerLabel.text = playerName
@@ -77,7 +79,7 @@ class Card: SKSpriteNode {
         self.addChild(ownerLabel)
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if owner != nil {
             if owner.peerID  == GameStateSingleton.sharedInstance.myPlayer.peerID {
                 flip()

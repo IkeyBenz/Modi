@@ -2,28 +2,28 @@ import Foundation
 import MultipeerConnectivity
 
 protocol ConnectionSceneDelegate {
-    func connectedDevicesChanged(manager : ModiBlueToothService, connectedDevices: [String])
-    func recievedUniversalPeerOrderFromHost(peers: [String])
+    func connectedDevicesChanged(_ manager : ModiBlueToothService, connectedDevices: [String])
+    func recievedUniversalPeerOrderFromHost(_ peers: [String])
     func gotoGame()
 }
 
 protocol GameSceneDelegate {
-    func heresTheNewDeck(deck: Deck)
+    func heresTheNewDeck(_ deck: Deck)
     func dealPeersCards()
-    func updateLabel(str: String)
+    func updateLabel(_ str: String)
     func yourTurn()
-    func playersTradedCards(playerOne: Player, playerTwo: Player)
-    func playerTradedWithDeck(player: Player)
+    func playersTradedCards(_ playerOne: Player, playerTwo: Player)
+    func playerTradedWithDeck(_ player: Player)
     func trashCards()
     func endRound()
 }
 
 
 class ModiBlueToothService: NSObject {
-    private let ModiServiceType = "modii-service"
-    private var myPeerID: MCPeerID
-    private let serviceAdvertiser: MCNearbyServiceAdvertiser
-    private let serviceBrowser: MCNearbyServiceBrowser
+    fileprivate let ModiServiceType = "modii-service"
+    fileprivate var myPeerID: MCPeerID
+    fileprivate let serviceAdvertiser: MCNearbyServiceAdvertiser
+    fileprivate let serviceBrowser: MCNearbyServiceBrowser
     
     var connectionSceneDelegate: ConnectionSceneDelegate?
     var gameSceneDelegate: GameSceneDelegate?
@@ -47,16 +47,16 @@ class ModiBlueToothService: NSObject {
     }
     
     lazy var session: MCSession = {
-        let session = MCSession(peer: self.myPeerID, securityIdentity: nil, encryptionPreference: MCEncryptionPreference.Required)
+        let session = MCSession(peer: self.myPeerID, securityIdentity: nil, encryptionPreference: MCEncryptionPreference.required)
         session.delegate = self
         return session
     }()
     
-    func sendData(string: String) {
+    func sendData(_ string: String) {
         if session.connectedPeers.count > 0 {
             var error : NSError?
             do {
-                try self.session.sendData(string.dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: false)!, toPeers: session.connectedPeers, withMode: MCSessionSendDataMode.Reliable)
+                try self.session.send(string.data(using: String.Encoding.utf8, allowLossyConversion: false)!, toPeers: session.connectedPeers, with: MCSessionSendDataMode.reliable)
             } catch let error1 as NSError {
                 error = error1
                 print("%@", "\(error)")
@@ -64,7 +64,7 @@ class ModiBlueToothService: NSObject {
         }
     }
 
-    func peerStringsArray(str: String) -> [String] {
+    func peerStringsArray(_ str: String) -> [String] {
         var peerStrings: [String] = []
         var currentPeer: String = ""
         
@@ -79,7 +79,7 @@ class ModiBlueToothService: NSObject {
         return peerStrings
     }
     
-    func handleCardSwapUsingString(string: String) {
+    func handleCardSwapUsingString(_ string: String) {
         var playerOneString: String = ""
         var playerTwoString: String = ""
         var hitPeriod: Bool = false
@@ -112,10 +112,10 @@ class ModiBlueToothService: NSObject {
 }
 
 extension ModiBlueToothService: MCNearbyServiceAdvertiserDelegate {
-    func advertiser(advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: NSError) {
+    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
         print("Did not start advertising peer: \(error)")
     }
-    func advertiser(advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: NSData?, invitationHandler: (Bool, MCSession) -> Void) {
+    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         
         print("Did recieve invitation from \(peerID.displayName)")
         
@@ -137,7 +137,7 @@ extension ModiBlueToothService: MCNearbyServiceAdvertiserDelegate {
             return true
         }()
         
-        if GameStateSingleton.sharedInstance.currentGameState == .WaitingForPlayers || (isAlreadyPartOfGame && isntConnected) {
+        if GameStateSingleton.sharedInstance.currentGameState == .waitingForPlayers || (isAlreadyPartOfGame && isntConnected) {
             print("Accepting invitation from \(peerID.displayName)")
             invitationHandler(true, self.session)
         }
@@ -145,10 +145,10 @@ extension ModiBlueToothService: MCNearbyServiceAdvertiserDelegate {
 }
 
 extension ModiBlueToothService: MCNearbyServiceBrowserDelegate {
-    func browser(browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: NSError) {
+    func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
         print("Did not start browsing for peers: \(error)")
     }
-    func browser(browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
+    func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
         print("Found peer: \(peerID.displayName)")
         
         let isAlreadyPartOfGame: Bool = {
@@ -169,12 +169,12 @@ extension ModiBlueToothService: MCNearbyServiceBrowserDelegate {
             return true
         }()
         
-        if GameStateSingleton.sharedInstance.currentGameState == .WaitingForPlayers || (isAlreadyPartOfGame && isntConnected) {
+        if GameStateSingleton.sharedInstance.currentGameState == .waitingForPlayers || (isAlreadyPartOfGame && isntConnected) {
             print("Sending invite to: \(peerID.displayName)")
-            browser.invitePeer(peerID, toSession: self.session, withContext: nil, timeout: 30)
+            browser.invitePeer(peerID, to: self.session, withContext: nil, timeout: 30)
         }
     }
-    func browser(browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
+    func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         print("Lost peer: \(peerID.displayName)")
     }
     
@@ -183,17 +183,17 @@ extension ModiBlueToothService: MCNearbyServiceBrowserDelegate {
 extension MCSessionState {
     func stringValue() -> String {
         switch(self) {
-        case .NotConnected: return "Not Connected"
-        case .Connecting: return "Connecting"
-        case .Connected: return "Connected"
+        case .notConnected: return "Not Connected"
+        case .connecting: return "Connecting"
+        case .connected: return "Connected"
         }
     }
 }
 
 extension ModiBlueToothService: MCSessionDelegate {
-    func session(session: MCSession, didReceiveData data: NSData, fromPeer peerID: MCPeerID) {
+    func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         
-        let str = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
+        let str = NSString(data: data, encoding: String.Encoding.utf8.rawValue) as! String
         
         if str == "gametime" {
             connectionSceneDelegate?.gotoGame()
@@ -212,13 +212,13 @@ extension ModiBlueToothService: MCSessionDelegate {
         
         
         if str.characters.count > 9 {
-            if str.substringToIndex(str.startIndex.advancedBy(10)) == "deckString" {
-                let deckString = str.stringByReplacingOccurrencesOfString("deckString", withString: "")
+            if str.substring(to: str.characters.index(str.startIndex, offsetBy: 10)) == "deckString" {
+                let deckString = str.replacingOccurrences(of: "deckString", with: "")
                 gameSceneDelegate?.heresTheNewDeck(Deck(withString: deckString))
             }
             
-            if str.substringToIndex(str.startIndex.advancedBy(10)) == "nextDealer" {
-                let dealerName = str.stringByReplacingOccurrencesOfString("nextDealer", withString: "")
+            if str.substring(to: str.characters.index(str.startIndex, offsetBy: 10)) == "nextDealer" {
+                let dealerName = str.replacingOccurrences(of: "nextDealer", with: "")
                 for player in GameStateSingleton.sharedInstance.orderedPlayers {
                     if player.name == dealerName {
                         GameStateSingleton.sharedInstance.currentDealer = player
@@ -227,25 +227,25 @@ extension ModiBlueToothService: MCSessionDelegate {
                 
             }
             
-            if str.substringToIndex(str.startIndex.advancedBy(9)) == "peerOrder" {
-                let peerOrder = str.stringByReplacingOccurrencesOfString("peerOrder", withString: "")
+            if str.substring(to: str.characters.index(str.startIndex, offsetBy: 9)) == "peerOrder" {
+                let peerOrder = str.replacingOccurrences(of: "peerOrder", with: "")
                 connectionSceneDelegate?.recievedUniversalPeerOrderFromHost(peerStringsArray(peerOrder))
             }
             
-            if str.substringToIndex(str.startIndex.advancedBy(11)) == "updateLabel" {
-                let updateString = str.stringByReplacingOccurrencesOfString("updateLabel", withString: "")
+            if str.substring(to: str.characters.index(str.startIndex, offsetBy: 11)) == "updateLabel" {
+                let updateString = str.replacingOccurrences(of: "updateLabel", with: "")
                 gameSceneDelegate?.updateLabel(updateString)
             }
             
-            if str.substringToIndex(str.startIndex.advancedBy(11)) == "playersTurn" {
-                let player = str.stringByReplacingOccurrencesOfString("playersTurn", withString: "")
+            if str.substring(to: str.characters.index(str.startIndex, offsetBy: 11)) == "playersTurn" {
+                let player = str.replacingOccurrences(of: "playersTurn", with: "")
                 if player == self.session.myPeerID.displayName {
                     gameSceneDelegate?.yourTurn()
                 }
             }
             
-            if str.substringToIndex(str.startIndex.advancedBy(11)) == "hittingDeck" {
-                let string = str.stringByReplacingOccurrencesOfString("hittingDeck", withString: "")
+            if str.substring(to: str.characters.index(str.startIndex, offsetBy: 11)) == "hittingDeck" {
+                let string = str.replacingOccurrences(of: "hittingDeck", with: "")
                 for player in GameStateSingleton.sharedInstance.orderedPlayers {
                     if string == player.name {
                         gameSceneDelegate?.playerTradedWithDeck(player)
@@ -253,13 +253,13 @@ extension ModiBlueToothService: MCSessionDelegate {
                 }
             }
             
-            if str.substringToIndex(str.startIndex.advancedBy(12)) == "playerTraded" {
-                let string = str.stringByReplacingOccurrencesOfString("playerTraded", withString: "")
+            if str.substring(to: str.characters.index(str.startIndex, offsetBy: 12)) == "playerTraded" {
+                let string = str.replacingOccurrences(of: "playerTraded", with: "")
                 self.handleCardSwapUsingString(string)
             }
             
-            if str.substringToIndex(str.startIndex.advancedBy(13)) == "currentDealer" {
-                let currentDealerName = str.stringByReplacingOccurrencesOfString("currentDealer", withString: "")
+            if str.substring(to: str.characters.index(str.startIndex, offsetBy: 13)) == "currentDealer" {
+                let currentDealerName = str.replacingOccurrences(of: "currentDealer", with: "")
                 for player in GameStateSingleton.sharedInstance.orderedPlayers {
                     if player.name == currentDealerName {
                         GameStateSingleton.sharedInstance.currentDealer = player
@@ -270,25 +270,25 @@ extension ModiBlueToothService: MCSessionDelegate {
         
         
     }
-    func session(session: MCSession, peer peerID: MCPeerID, didChangeState state: MCSessionState) {
+    func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
         print("\(peerID.displayName) did change state: \(state.stringValue())")
-        if state == .NotConnected {
-            serviceBrowser.invitePeer(peerID, toSession: self.session, withContext: nil, timeout: 30)
+        if state == .notConnected {
+            serviceBrowser.invitePeer(peerID, to: self.session, withContext: nil, timeout: 30)
         }
         self.connectionSceneDelegate?.connectedDevicesChanged(self, connectedDevices: session.connectedPeers.map({$0.displayName}))
-        if GameStateSingleton.sharedInstance.currentGameState == .WaitingForPlayers {
+        if GameStateSingleton.sharedInstance.currentGameState == .waitingForPlayers {
         }
     }
     
-    func session(session: MCSession, didReceiveStream stream: NSInputStream, withName streamName: String, fromPeer peerID: MCPeerID) {
+    func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {
         
     }
     
-    func session(session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, withProgress progress: NSProgress) {
+    func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {
         
     }
     
-    func session(session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, atURL localURL: NSURL, withError error: NSError?) {
+    func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL, withError error: Error?) {
         
     }
 }

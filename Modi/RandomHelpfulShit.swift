@@ -22,9 +22,9 @@ extension Int {
 }
 
 extension Array where Element: Equatable {
-    mutating func remove(object: Element) {
-        if let index = indexOf(object) {
-            removeAtIndex(index)
+    mutating func remove(_ object: Element) {
+        if let index = index(of: object) {
+            self.remove(at: index)
         }
     }
 }
