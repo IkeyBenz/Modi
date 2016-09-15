@@ -24,24 +24,30 @@ class GameScene: SKScene {
     var players: Int = GameStateSingleton.sharedInstance.orderedPlayers.count
     var cardsInPlay: [Card] = []
     var cardsInTrash: [Card] = []
-    let dealButton = SKLabelNode(fontNamed: "Chalkduster")
+    let dealButton = SKLabelNode(fontNamed: "Chalkboard SE")
     var dealButtonImage = SKSpriteNode(imageNamed: "Button")
     var deckOfCards: [Card] = []
-    var tradeButton = SKLabelNode(fontNamed: "Chalkduster")
+    var tradeButton = SKLabelNode(fontNamed: "Chalkboard SE")
     var tradeButtonImage = SKSpriteNode(imageNamed: "Button")
-    var stickButton = SKLabelNode(fontNamed: "Chalkduster")
+    let endGameButton = SKLabelNode(fontNamed: "Chalkboard SE")
+    var stickButton = SKLabelNode(fontNamed: "Chalkboard SE")
     var stickButtonImage = SKSpriteNode(imageNamed: "Button")
-    var updateLabel = SKLabelNode(fontNamed: "Chalkduster")
-    var roundLabel = SKLabelNode(fontNamed: "Chalkduster")
+    var updateLabel = SKLabelNode(fontNamed: "Chalkboard SE")
+    var roundLabel = SKLabelNode(fontNamed: "Chalkboard SE")
     var roundNumber: Int = 0
     var myTurnToDeal: Bool = false
-    var deckPosition: CGPoint!
+    var deckPosition = CGPoint(x: 0, y: 0)
+    var trashPosition = CGPoint(x: 0, y: 0)
     var playerLabels: [SKLabelNode] = []
     var playerLabelsInLeaderBoard: [SKLabelNode] = []
     var leaderBoardComponenets: [SKSpriteNode] = []
     var playersInOrderOfLives: [Player] = []
     var playersStillInTheGame: [Player] = []
     var itsTheEndOfTheGame: Bool = false
+    var losers: [Player] = []
+    var blackBackground: SKSpriteNode!
+    
+    
     
     let playerIndexOrder: Int = {
         let index: Int = 0
@@ -72,12 +78,10 @@ class GameScene: SKScene {
         GS.currentGameState = .inSession
         playersInOrderOfLives = GS.orderedPlayers
         playersStillInTheGame = GS.orderedPlayers
-        setUpLeaderBoard()
         
-        let indexLabel = SKLabelNode(text: String(playerIndexOrder))
-        indexLabel.position = CGPoint(x: self.frame.midX, y: self.frame.midY)
-        indexLabel.zPosition = 11
-        self.addChild(indexLabel)
+       
+
+        setUpLeaderBoard()
         
         
         let background = SKSpriteNode(imageNamed: "Felt")
@@ -85,17 +89,29 @@ class GameScene: SKScene {
         background.position = CGPoint(x: frame.midX, y: frame.midY)
         
         
-        let threePercentWidth = self.frame.maxX * 0.03
+        //let threePercentWidth = self.frame.maxX * 0.03
+        
+        let referenceCard = Card(suit: "spades", readableRank: "Ace", rank: 1)
+        referenceCard.size = resizeCard(referenceCard)
+        
+        
+        trashPosition.x = self.frame.width - (referenceCard.frame.width)
+        deckPosition.x = trashPosition.x - (referenceCard.frame.width * 1.6)
+        
         dealButton.fontSize = 24
         dealButton.text = "Deal Cards"
-        dealButton.position = CGPoint(x: frame.maxX - (dealButton.frame.width / 2) - threePercentWidth, y: self.frame.maxY / 14)
+        dealButton.position = CGPoint(x: (trashPosition.x + deckPosition.x) / 2, y: self.frame.maxY / 14)
         dealButton.zPosition = 1
         setupButton(dealButtonImage, buttonLabel: dealButton)
         
+        trashPosition.y = dealButton.position.y + dealButtonImage.size.height + (referenceCard.size.height / 2)
+        deckPosition.y = trashPosition.y
+        
+        
         if GS.currentDealer.peerID == myPlayer.peerID {
             deck.shuffle()
-            placeDeckOnScreen()
             GS.bluetoothService.sendData("deckString" + deck.cardsString)
+            placeDeckOnScreen()
         }
         
         tradeButton.text = "Swap"
@@ -123,6 +139,45 @@ class GameScene: SKScene {
         self.addChild(background)
         self.addChild(updateLabel)
         runBeginingOfRoundFunctions()
+        
+        //END OF GAME VIEW
+        blackBackground = SKSpriteNode(color: UIColor.black, size: background.size)
+        blackBackground.alpha = 0.0
+        blackBackground.position = CGPoint(x: self.frame.width / 2, y: self.frame.height / 2)
+        blackBackground.zPosition = 100
+        self.addChild(blackBackground)
+        
+        let winnerLabel = SKLabelNode(text: "Winner: ")
+        winnerLabel.fontName = "Chalkboard SE"
+        winnerLabel.position = CGPoint(x: 0, y: blackBackground.frame.height * 0.75 - (blackBackground.frame.height / 2))
+        winnerLabel.zPosition = 1
+        winnerLabel.fontSize = 24
+        winnerLabel.name = "winnerLabel"
+        
+        let loserLabel = SKLabelNode(text: "Losers: ")
+        loserLabel.fontName = "Chalkboard SE"
+        loserLabel.position = CGPoint(x: 0, y: blackBackground.frame.height * 0.5 - (blackBackground.frame.height / 2))
+        loserLabel.zPosition = 1
+        loserLabel.fontSize = 24
+        loserLabel.name = "loserLabel"
+        
+        endGameButton.position = CGPoint(x: 0, y: blackBackground.frame.height / 5 - (blackBackground.frame.height / 2))
+        endGameButton.zPosition = 1
+        endGameButton.fontSize = 18
+        endGameButton.text = "End Game"
+        let endGameButtonImage = SKSpriteNode(imageNamed: "Button")
+        blackBackground.addChild(endGameButton)
+        blackBackground.addChild(endGameButtonImage)
+        setupButton(endGameButtonImage, buttonLabel: endGameButton)
+        
+        blackBackground.addChild(winnerLabel)
+        blackBackground.addChild(loserLabel)
+        
+        print(winnerLabel.position)
+        print(loserLabel.position)
+        
+        
+
         
     }
     
@@ -175,7 +230,7 @@ class GameScene: SKScene {
         
         for x in 0 ..< playersInOrderOfLives.count {
             let cellView = SKSpriteNode(imageNamed: "CellBackground")
-            let playerLabel = SKLabelNode(fontNamed: "Chalkduster")
+            let playerLabel = SKLabelNode(fontNamed: "Chalkboard SE")
             let fadeLabel = SKAction.fadeOut(withDuration: 3)
             let removeLabel = SKAction.run({playerLabel.removeFromParent()})
             playerLabel.text = "\(x + 1)) \(playersInOrderOfLives[x].name): \(playersInOrderOfLives[x].lives) lives"
@@ -193,6 +248,11 @@ class GameScene: SKScene {
                 playerLabel.run(SKAction.sequence([SKAction.wait(forDuration: 1), SKAction.run({playerLabel.fontColor = UIColor.red})]))
                 playerLabel.run(SKAction.sequence([SKAction.wait(forDuration: 1), fadeLabel]))
                 self.run(SKAction.sequence([SKAction.wait(forDuration: 3), removeLabel]))
+                for player in GS.orderedPlayers {
+                    if playersInOrderOfLives[x].name == player.name {
+                        losers.append(player)
+                    }
+                }
             }
             leaderBoardComponenets.append(cellView)
             playerLabelsInLeaderBoard.append(playerLabel)
@@ -271,7 +331,13 @@ class GameScene: SKScene {
                 }
                 self.removePlayerOptions()
             }
+            
+            if atPoint(touch.location(in: self)) == endGameButton {
+                endGameAndGoToConnectionScene()
+            }
         }
+        
+        
     }
     
     override func update(_ currentTime: TimeInterval) {
@@ -380,7 +446,7 @@ class GameScene: SKScene {
     func placeDeckOnScreen() {
         var x: CGFloat = 1
         for card in deck.cards {
-            addCard(card, zPos: x)
+            addCard(card: card, zPos: x)
             x = x + 1
         }
     }
@@ -390,11 +456,10 @@ class GameScene: SKScene {
         return CGSize(width: setHeight * aspectRatio, height: setHeight)
     }
     
-    func addCard(_ card: Card, zPos: CGFloat) {
+    func addCard(card: Card, zPos: CGFloat) {
         let randomRotation = arc4random_uniform(10)
-        let twentyFiveOfDealLabel = dealButton.frame.minX + (dealButton.frame.width * 0.25)
         card.size = resizeCard(card)
-        card.position = CGPoint(x: twentyFiveOfDealLabel, y: frame.maxY / 4)
+        card.position = self.deckPosition
         card.zRotation = (CGFloat(randomRotation) - 5) * CGFloat(M_PI) / 180
         card.zPosition = zPos
         card.isUserInteractionEnabled = true
@@ -435,7 +500,7 @@ class GameScene: SKScene {
             let actionRotate = SKAction.rotate(toAngle: (angle + 90.toRadians()), duration: 0.5)
             
             
-            let playerLabel = SKLabelNode(fontNamed: "Chalkduster")
+            let playerLabel = SKLabelNode(fontNamed: "Chalkboard SE")
             let fivePercentWidth = self.frame.size.width * 0.05
             let fivePercentHeight = self.frame.size.height * 0.05
             playerLabel.text = self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + Int(dealerHopper + 1), range: self.GS.orderedPlayers.count)].name
@@ -526,17 +591,12 @@ class GameScene: SKScene {
             self.updateLabel.text = "\(playersLost[0]) lost this round."
         }
         
-        let waitFive = SKAction.wait(forDuration: 5)
+        let waitFive = SKAction.wait(forDuration: 4)
         let trashCards = SKAction.run({self.sendCardsToTrash()})
         
         let showLeaderBoard = SKAction.run({self.setUpLeaderBoard()})
         let checkLiveCount = SKAction.run({
-//            for player in 0 ..< self.playersStillInTheGame.count - 1 {
-//                if self.playersStillInTheGame[player].lives < 1 {
-//                    self.playersStillInTheGame[player].isStillInGame = false
-//                    self.playersStillInTheGame.removeAtIndex(player)
-//                }
-//            }
+
             var x = 0
             for player in self.playersStillInTheGame {
                 if player.lives < 1 {
@@ -545,15 +605,6 @@ class GameScene: SKScene {
                 }
                 x += 1
             }
-            
-            let playersInGameString: String = {
-                var str = ""
-                for player in self.playersStillInTheGame {
-                    str = str + player.name + ", "
-                }
-                return str
-            }()
-            print(playersInGameString)
             
             if self.playersStillInTheGame.count == 1 {
                 self.itsTheEndOfTheGame = true
@@ -564,8 +615,6 @@ class GameScene: SKScene {
         })
         
         self.run(SKAction.sequence([waitFive, trashCards, showLeaderBoard, checkLiveCount]))
-        
-        //CHECK EACH PLAYERS LIVE COUNT, IF ANY HAVE ZERO, GIVE THEM THE BOOT
     
         
         // IF EVERY PLAYER ONLY HAS 0 LIVES LEFT -> GO INTO DOUBLE GAME
@@ -574,16 +623,13 @@ class GameScene: SKScene {
     
     func sendCardsToTrash() {
         for card in cardsInPlay {
-            let seventyFiveOfDealLabel = dealButton.frame.minX + (dealButton.frame.width * 0.75)
-            let fiveOfScreenHeight = self.frame.height * 0.05
-            let trashPosition = CGPoint(x: seventyFiveOfDealLabel, y:  dealButtonImage.frame.maxY + fiveOfScreenHeight + (card.frame.height / 2))
             let randomRotation = (CGFloat(arc4random_uniform(12)) - 6) * CGFloat(M_PI) / 180
-            let moveToTrash = SKAction.move(to: trashPosition, duration: 1)
+            let moveToTrash = SKAction.move(to: self.trashPosition, duration: 1)
             let rotateToStraight = SKAction.rotate(toAngle: randomRotation, duration: 1)
             
             card.run(moveToTrash)
             card.run(rotateToStraight)
-            card.zPosition = 56 - card.zPosition
+            card.zPosition = 60 - card.zPosition
             cardsInPlay.remove(at: cardsInPlay.index(of: card)!)
             cardsInTrash.append(card)
             card.owner.card = nil
@@ -618,35 +664,43 @@ class GameScene: SKScene {
     }
     
     func runEndOfGameFunctions() {
-        self.updateLabel.text = "\(playersStillInTheGame[0].name) WINS THE GAME!"
+        self.updateLabel.text = "\(playersStillInTheGame[0].name.uppercased()) WINS THE GAME!"
+        let fadeIn = SKAction.fadeAlpha(to: 0.7, duration: 1)
+        blackBackground.run(SKAction.sequence([SKAction.wait(forDuration: 1), fadeIn]))
         
-        //MOVE CARDS OFF THE SCREEN
-        let moveDeckCard = {
-            let topCard = self.deckOfCards.last
-            let moveToRightOfScreen = SKAction.move(to: CGPoint(x: self.frame.maxX + topCard!.frame.width, y: topCard!.position.y), duration: 0.1)
-            topCard!.run(moveToRightOfScreen)
-            self.deckOfCards.removeLast()
+        let loserLabel: SKLabelNode = blackBackground.childNode(withName: "loserLabel") as! SKLabelNode
+        var loserString: String = "Losers: "
+        for loser in losers {
+            loserString += loser.name + ", "
         }
-        let deckSequence = SKAction.sequence([SKAction.run(moveDeckCard), SKAction.wait(forDuration: 0.1)])
-        let repeatMoveDeckCard = SKAction.repeat(deckSequence, count: deckOfCards.count)
-        self.run(repeatMoveDeckCard)
+        loserString.characters.removeLast()
+        loserString.characters.removeLast()
+        loserLabel.text = loserString
         
-        let moveTrashCard = {
-            let topCard = self.cardsInTrash.last
-            let moveToRightOfScreen = SKAction.move(to: CGPoint(x: self.frame.maxX + topCard!.frame.width, y: topCard!.position.y), duration: 0.1)
-            topCard!.run(moveToRightOfScreen)
-            self.cardsInTrash.removeLast()
-        }
-        let trashSequence = SKAction.sequence([SKAction.run(moveTrashCard), SKAction.wait(forDuration: 0.1)])
-        let repeatMoveTrashCard = SKAction.repeat(trashSequence, count: cardsInTrash.count)
-        self.run(repeatMoveTrashCard)
-        for card in cardsInTrash {
-            print("\(card.readableRank) of \(card.suit)")
-        }
+        let winnerLabel: SKLabelNode = blackBackground.childNode(withName: "winnerLabel") as! SKLabelNode
+        winnerLabel.text = "Winner: " + self.playersStillInTheGame[0].name
         
-        //MOVE WINNING PLAYER LABEL TO MIDDLE AND SCALE IT UP
-        //SHOW WHO THE LOSERS ARE
+                
+        
         //ADD A BUTTON AT BOTTOM TO GO BACK TO CONNECTION SCENE
+    }
+    
+    func endGameAndGoToConnectionScene() {
+        let skView = self.view! as SKView
+        let scene = ConnectionScene(fileNamed: "ConnectionScene")
+        skView.showsFPS = false
+        skView.showsNodeCount = false
+        scene?.scaleMode = .resizeFill
+        
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            scene?.scaleMode = .aspectFit
+        }
+        
+        skView.presentScene(scene)
+        
+        GS.orderedPlayers = []
+        GS.currentGameState = .waitingForPlayers
+        GS.bluetoothService = nil
     }
     
     

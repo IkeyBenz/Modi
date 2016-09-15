@@ -3,23 +3,23 @@ import SpriteKit
 
 class ConnectionScene: SKScene {
     
-    
-    let startGamebutton = SKLabelNode(fontNamed: "Chalkduster")
+    let globalFont: String = "Chalkboard SE"
+    let startGamebutton = SKLabelNode(fontNamed: "Chalkboard SE")
     var buttonImage = SKSpriteNode(imageNamed: "Button")
     var textField: UITextField!
-    var textFieldStamp = SKLabelNode(fontNamed: "Chalkduster")
+    var textFieldStamp = SKLabelNode(fontNamed: "Chalkboard SE")
     var textFieldImage = SKSpriteNode(imageNamed: "TextField")
     var tableViewImage = SKSpriteNode(imageNamed: "TableViewBorder")
-    var yourNameLabel = SKLabelNode(fontNamed: "Chalkduster")
-    var waitingForPlayersLabel = SKLabelNode(fontNamed: "Chalkduster")
+    var yourNameLabel = SKLabelNode(fontNamed: "Chalkboard SE")
+    var waitingForPlayersLabel = SKLabelNode(fontNamed: "Chalkboard SE")
     
-    var peerOne = SKLabelNode(fontNamed: "Chalkduster")
-    var peerTwo = SKLabelNode(fontNamed: "Chalkduster")
-    var peerThree = SKLabelNode(fontNamed: "Chalkduster")
-    var peerFour = SKLabelNode(fontNamed: "Chalkduster")
-    var peerFive = SKLabelNode(fontNamed: "Chalkduster")
-    var peerSix = SKLabelNode(fontNamed: "Chalkduster")
-    var peerSeven = SKLabelNode(fontNamed: "Chalkduster")
+    var peerOne = SKLabelNode()
+    var peerTwo = SKLabelNode()
+    var peerThree = SKLabelNode()
+    var peerFour = SKLabelNode()
+    var peerFive = SKLabelNode()
+    var peerSix = SKLabelNode()
+    var peerSeven = SKLabelNode()
     var peerLabels: [SKLabelNode] = []
     
     override func didMove(to view: SKView) {
@@ -51,9 +51,10 @@ class ConnectionScene: SKScene {
         
         textField = UITextField(frame: CGRect(x: yourNameLabel.frame.maxX + 20, y: frame.height - yourNameLabel.position.y - 25, width: 400, height: 40))
         textField.placeholder = "Type your name here"
-        textField.font = UIFont(name: "Chalkduster", size: fontSize)
+        textField.font = UIFont(name: "Chalkboard SE", size: fontSize)
         textField.textColor = UIColor.white
         textField.delegate = self
+        textField.text = nil
         
         textFieldImage.centerRect = CGRect(x: 8.5 / 240, y: 7.5 / 32, width: 223 / 240, height: 17 / 32)
         textFieldImage.anchorPoint = CGPoint(x: 0.0, y: 0.5)
@@ -93,8 +94,8 @@ class ConnectionScene: SKScene {
         tableViewImage.position = CGPoint(x: ((frame.width * 0.15) + (tableViewImage.frame.width / 2)), y: waitingForPlayersLabel.frame.minY)
         tableViewImage.zPosition = 11
         for label in peerLabels {
+            label.fontName = globalFont
             label.fontSize = fontSize
-            label.fontName = "Chalkduster"
             print(label.yScale)
         }
         
@@ -117,6 +118,7 @@ class ConnectionScene: SKScene {
             tableViewImage.addChild(label)
             label.fontSize = 14
             label.text = "Not Connected"
+            label.fontName = globalFont
         }
         peerOne.position = CGPoint(x: -(tableViewImage.frame.size.width / 4), y: -(tableViewImage.frame.height) + (tableViewImage.frame.size.height / 5 * 4))
         peerTwo.position = CGPoint(x: -(tableViewImage.frame.size.width / 4), y: -(tableViewImage.frame.height) + (tableViewImage.frame.size.height / 5 * 3))
@@ -158,7 +160,13 @@ class ConnectionScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             if startGamebutton.frame.contains(touch.location(in: self)) {
-                buttonImage.texture = SKTexture(imageNamed: "ButtonPressed")
+                if textFieldStamp.text == "" {
+                    let moveUp = SKAction.moveBy(x: 0, y: 10, duration: 0.15)
+                    let moveDown = SKAction.moveBy(x: 0, y: -10, duration: 0.15)
+                    waitingForPlayersLabel.run(SKAction.sequence([moveUp, moveDown]))
+                } else {
+                    buttonImage.texture = SKTexture(imageNamed: "ButtonPressed")
+                }
             }
         }
     }
@@ -166,11 +174,13 @@ class ConnectionScene: SKScene {
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             if startGamebutton.frame.contains(touch.location(in: self)) {
-                GameStateSingleton.sharedInstance.bluetoothService.sendData(orderedPlayersString())
-                GameStateSingleton.sharedInstance.bluetoothService.sendData("currentDealer\(GameStateSingleton.sharedInstance.bluetoothService.session.myPeerID.displayName)")
-                GameStateSingleton.sharedInstance.currentDealer = GameStateSingleton.sharedInstance.orderedPlayers[0]
-                GameStateSingleton.sharedInstance.bluetoothService.sendData("gametime")
-                self.goToGameScene()
+                if textFieldStamp.text != "" {
+                    GameStateSingleton.sharedInstance.bluetoothService.sendData(orderedPlayersString())
+                    GameStateSingleton.sharedInstance.bluetoothService.sendData("currentDealer\(GameStateSingleton.sharedInstance.bluetoothService.session.myPeerID.displayName)")
+                    GameStateSingleton.sharedInstance.currentDealer = GameStateSingleton.sharedInstance.orderedPlayers[0]
+                    GameStateSingleton.sharedInstance.bluetoothService.sendData("gametime")
+                    self.goToGameScene()
+                }
             }
             buttonImage.texture = SKTexture(imageNamed: "Button")
         }
