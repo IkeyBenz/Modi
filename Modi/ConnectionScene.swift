@@ -9,9 +9,10 @@ class ConnectionScene: SKScene {
     var textField: UITextField!
     var textFieldStamp = SKLabelNode(fontNamed: "Chalkboard SE")
     var textFieldImage = SKSpriteNode(imageNamed: "TextField")
-    var tableViewImage = SKSpriteNode(imageNamed: "TableViewBorder")
+    var tableViewImage = SKSpriteNode(imageNamed: "TextField")
     var yourNameLabel = SKLabelNode(fontNamed: "Chalkboard SE")
     var waitingForPlayersLabel = SKLabelNode(fontNamed: "Chalkboard SE")
+    var fontSize: CGFloat = 12
     
     var peerOne = SKLabelNode()
     var peerTwo = SKLabelNode()
@@ -24,9 +25,9 @@ class ConnectionScene: SKScene {
     
     override func didMove(to view: SKView) {
         
-        positionPeerLabels()
+        
         let eightPercentHeight = self.frame.height * 0.07
-        var fontSize: CGFloat = 12
+        
         if UIDevice.current.userInterfaceIdiom == .pad {fontSize = 16}
         else if UIDevice.current.userInterfaceIdiom == .phone {fontSize = 12}
         
@@ -65,9 +66,7 @@ class ConnectionScene: SKScene {
     
         
         waitingForPlayersLabel.text = "Type In Your Name Above"
-        waitingForPlayersLabel.fontSize = 13
-        if UIDevice.current.userInterfaceIdiom == .phone {waitingForPlayersLabel.fontSize = 12}
-        else if UIDevice.current.userInterfaceIdiom == .pad {waitingForPlayersLabel.fontSize = 17}
+        waitingForPlayersLabel.fontSize = 16
         waitingForPlayersLabel.position = CGPoint(x: frame.width / 2, y: textFieldImage.position.y - (textFieldImage.frame.height / 2) - (waitingForPlayersLabel.frame.height / 2) - eightPercentHeight)
         waitingForPlayersLabel.zPosition = 10
         
@@ -78,26 +77,30 @@ class ConnectionScene: SKScene {
         startGamebutton.fontSize = 18
         startGamebutton.zPosition = 11
         
-        buttonImage.position = startGamebutton.position
+        
+        if UIDevice.current.userInterfaceIdiom == .phone {waitingForPlayersLabel.fontSize = 14; self.fontSize = 14; yourNameLabel.fontSize = 12; textField.minimumFontSize = 12; textFieldStamp.fontSize = 12}
+        else if UIDevice.current.userInterfaceIdiom == .pad {waitingForPlayersLabel.fontSize = 20; self.fontSize = 30; yourNameLabel.fontSize = 18; textField.minimumFontSize = 18; textFieldStamp.fontSize = 18; startGamebutton.fontSize = 35}
+
+        
         buttonImage.zPosition = 10
-        buttonImage.centerRect = CGRect(x: 17.0/62.0, y: 17.0/74.0, width: 28.0/62.0, height: 39.0/74.0);
+        buttonImage.centerRect = CGRect(x: 17.0/62.0, y: 17.0/74.0, width: 28.0/62.0, height: 39.0/74.0)
         buttonImage.anchorPoint = CGPoint(x: 0.5, y: 0.3)
         buttonImage.xScale = startGamebutton.frame.width / buttonImage.frame.width + 1
         buttonImage.yScale = startGamebutton.frame.height / buttonImage.frame.height + 0.5
+        buttonImage.position = CGPoint(x: startGamebutton.position.x, y: startGamebutton.position.y + 2)
         
         
-        tableViewImage.centerRect = CGRect(x: 10 / 458, y: 9 / 150, width: 438 / 458, height: 132 / 150)
+        
+        tableViewImage.centerRect = CGRect(x: 8.5 / 240, y: 7.5 / 32, width: 223 / 240, height: 17 / 32)
         tableViewImage.anchorPoint = CGPoint(x: 0.5, y: 1)
         tableViewImage.position = CGPoint(x: ((frame.width * 0.15) + (tableViewImage.frame.width / 2)), y: waitingForPlayersLabel.frame.minY)
         tableViewImage.xScale = (frame.width * 0.85 - tableViewImage.frame.minX) / tableViewImage.frame.width
         tableViewImage.yScale = (waitingForPlayersLabel.frame.minY - (frame.height * 0.23)) / tableViewImage.frame.height
         tableViewImage.position = CGPoint(x: ((frame.width * 0.15) + (tableViewImage.frame.width / 2)), y: waitingForPlayersLabel.frame.minY)
         tableViewImage.zPosition = 11
-        for label in peerLabels {
-            label.fontName = globalFont
-            label.fontSize = fontSize
-            print(label.yScale)
-        }
+        positionPeerLabels()
+        
+        
         
         self.addChild(yourNameLabel)
         self.addChild(textFieldStamp)
@@ -110,28 +113,34 @@ class ConnectionScene: SKScene {
         view.addSubview(textField)
         
         
+
     }
     
     func positionPeerLabels() {
         peerLabels = [peerOne, peerTwo, peerThree, peerFour, peerFive, peerSix, peerSeven]
         for label in peerLabels {
-            tableViewImage.addChild(label)
-            label.fontSize = 14
+            self.addChild(label)
             label.text = "Not Connected"
             label.fontName = globalFont
+            label.fontSize = self.fontSize
+            label.zPosition = 2
         }
-        peerOne.position = CGPoint(x: -(tableViewImage.frame.size.width / 4), y: -(tableViewImage.frame.height) + (tableViewImage.frame.size.height / 5 * 4))
-        peerTwo.position = CGPoint(x: -(tableViewImage.frame.size.width / 4), y: -(tableViewImage.frame.height) + (tableViewImage.frame.size.height / 5 * 3))
-        peerThree.position = CGPoint(x: -(tableViewImage.frame.size.width / 4), y: -(tableViewImage.frame.height) + (tableViewImage.frame.size.height / 5 * 2))
-        peerFour.position = CGPoint(x: -(tableViewImage.frame.size.width / 4), y: -(tableViewImage.frame.height) + (tableViewImage.frame.size.height / 5))
-        peerFive.position = CGPoint(x: tableViewImage.frame.size.width / 4, y: -(tableViewImage.frame.height) + (tableViewImage.frame.size.height / 5 * 4))
-        peerSix.position = CGPoint(x: tableViewImage.frame.size.width / 4, y: -(tableViewImage.frame.height) + (tableViewImage.frame.size.height / 5 * 3))
-        peerSeven.position = CGPoint(x: tableViewImage.frame.size.width / 4, y: -(tableViewImage.frame.height) + (tableViewImage.frame.size.height / 5 * 2))
+        peerOne.position = CGPoint(x: tableViewImage.position.x - (tableViewImage.frame.size.width / 4), y: tableViewImage.position.y + (tableViewImage.frame.size.height * 0.3) - (tableViewImage.frame.size.height / 2))
+        peerTwo.position = CGPoint(x: tableViewImage.position.x - (tableViewImage.frame.size.width / 4), y: tableViewImage.position.y + (tableViewImage.frame.size.height * 0.1) - (tableViewImage.frame.size.height / 2))
+        peerThree.position = CGPoint(x: tableViewImage.position.x - (tableViewImage.frame.size.width / 4), y: tableViewImage.position.y - (tableViewImage.frame.size.height * 0.1) - (tableViewImage.frame.size.height / 2))
+        peerFour.position = CGPoint(x: tableViewImage.position.x - (tableViewImage.frame.size.width / 4), y: tableViewImage.position.y - (tableViewImage.frame.size.height * 0.3) - (tableViewImage.frame.size.height / 2))
+        peerFive.position = CGPoint(x: tableViewImage.position.x + (tableViewImage.frame.size.width / 4), y: tableViewImage.position.y + (tableViewImage.frame.size.height * 0.3) - (tableViewImage.frame.size.height / 2))
+        peerSix.position = CGPoint(x: tableViewImage.position.x + (tableViewImage.frame.size.width / 4), y: tableViewImage.position.y + (tableViewImage.frame.size.height * 0.1) - (tableViewImage.frame.size.height / 2))
+        peerSeven.position = CGPoint(x: tableViewImage.position.x + (tableViewImage.frame.size.width / 4), y: tableViewImage.position.y - (tableViewImage.frame.size.height * 0.1) - (tableViewImage.frame.size.height / 2))
         
-        print(tableViewImage.frame.size)
-        for label in peerLabels {
-            print(label.position)
-        }
+        print(peerOne.position)
+        print(peerTwo.position)
+        print(peerThree.position)
+        print(peerFour.position)
+        print(peerFive.position)
+        print(peerSix.position)
+        print(peerSeven.position)
+        
     }
     
     

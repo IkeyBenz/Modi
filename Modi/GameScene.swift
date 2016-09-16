@@ -156,7 +156,7 @@ class GameScene: SKScene {
         
         let loserLabel = SKLabelNode(text: "Losers: ")
         loserLabel.fontName = "Chalkboard SE"
-        loserLabel.position = CGPoint(x: 0, y: blackBackground.frame.height * 0.5 - (blackBackground.frame.height / 2))
+        loserLabel.position = CGPoint(x: 0, y: blackBackground.frame.height * 0.45 - (blackBackground.frame.height / 2))
         loserLabel.zPosition = 1
         loserLabel.fontSize = 24
         loserLabel.name = "loserLabel"
@@ -182,8 +182,8 @@ class GameScene: SKScene {
     }
     
     func setUpLeaderBoard() {
-        let leaderBoardBorder = SKSpriteNode(imageNamed: "TableViewBorder")
-        leaderBoardBorder.centerRect = CGRect(x: 10 / 458, y: 9 / 150, width: 438 / 458, height: 132 / 150)
+        let leaderBoardBorder = SKSpriteNode(imageNamed: "Button")
+        leaderBoardBorder.centerRect = CGRect(x: 17.0/62.0, y: 17.0/74.0, width: 28.0/62.0, height: 39.0/74.0)
         leaderBoardBorder.xScale = (self.frame.width / 4) / leaderBoardBorder.frame.width
         leaderBoardBorder.yScale = (SKSpriteNode(imageNamed: "CellBackground").frame.height * CGFloat(players + 1)) / leaderBoardBorder.frame.height
         leaderBoardBorder.position = CGPoint(x: self.frame.width / 4, y: self.frame.height / 2)
@@ -330,6 +330,9 @@ class GameScene: SKScene {
                     }
                 }
                 self.removePlayerOptions()
+            }
+            if atPoint(touch.location(in: self)) == updateLabel {
+                runEndOfGameFunctions()
             }
             
             if atPoint(touch.location(in: self)) == endGameButton {
@@ -670,8 +673,10 @@ class GameScene: SKScene {
         
         let loserLabel: SKLabelNode = blackBackground.childNode(withName: "loserLabel") as! SKLabelNode
         var loserString: String = "Losers: "
-        for loser in losers {
-            loserString += loser.name + ", "
+        for player in GS.orderedPlayers {
+            if player.name != playersStillInTheGame[0].name {
+                loserString += player.name + ", "
+            }
         }
         loserString.characters.removeLast()
         loserString.characters.removeLast()
