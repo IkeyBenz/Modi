@@ -35,6 +35,13 @@ class Deck {
         var currentRank: String = ""
         var currentSuit: String = ""
         var buildingRanksString: Bool = true
+        var numberOfCards: Double = 0.0
+        
+        for character in str.characters {
+            if character == "." {
+                numberOfCards += 0.5
+            }
+        }
         
         for character in str.characters {
             if character != "." {
@@ -56,7 +63,7 @@ class Deck {
                 }
             }
         }
-        for n in 0 ..< 52 {
+        for n in 0 ..< Int(numberOfCards) {
             var z: Int = 1
             for rank in 0 ..< self.ranks.count {
                 if ranks[n] == self.ranks[rank] {
@@ -68,6 +75,28 @@ class Deck {
         for card in cards {
             cardsString += card.readableRank + "." + card.suit + "."
         }
+    }
+    
+    init(withCards: [Card]) {
+        var temporaryCards: [Card] = []
+        for suit in 0 ..< 4 {
+            for rank in 0 ..< 13 {
+                temporaryCards.append(Card(suit: suits[suit], readableRank: ranks[rank], rank: rank + 1))
+            }
+        }
+        for card in withCards {
+            for otherCard in temporaryCards {
+                if card.suit == otherCard.suit && card.rank == otherCard.rank {
+                    self.cards.append(otherCard)
+                }
+            }
+        }
+        
+        
+        for card in cards {
+            cardsString += card.readableRank + "." + card.suit + "."
+        }
+        
     }
     
     

@@ -22,7 +22,7 @@ class GameStateSingleton {
     var bluetoothService: ModiBlueToothService!
     var deviceName: String = ""
     var orderedPlayers: [Player] = []
-    var playersDictionary: [String: MCPeerID] = [:]
+    var playersDictionary: [String : MCPeerID] = [:]
     var myPlayer: Player!
     var currentDealer: Player!
     
