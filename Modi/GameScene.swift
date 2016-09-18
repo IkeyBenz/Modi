@@ -27,6 +27,7 @@ class GameScene: SKScene {
     let dealButton = SKLabelNode(fontNamed: "Chalkboard SE")
     var dealButtonImage = SKSpriteNode(imageNamed: "Button")
     var deckOfCards: [Card] = []
+    var trashDeck = Deck()
     var tradeButton = SKLabelNode(fontNamed: "Chalkboard SE")
     var tradeButtonImage = SKSpriteNode(imageNamed: "Button")
     let endGameButton = SKLabelNode(fontNamed: "Chalkboard SE")
@@ -79,9 +80,8 @@ class GameScene: SKScene {
         playersInOrderOfLives = GS.orderedPlayers
         playersStillInTheGame = GS.orderedPlayers
         
-       
-
         setUpLeaderBoard()
+        self.trashDeck.cards = []
         
         
         let background = SKSpriteNode(imageNamed: "Felt")
@@ -388,8 +388,8 @@ class GameScene: SKScene {
     }
     
     func tradeCardWithDeck(_ player: Player) {
-        if deckOfCards.count > 0 {
-            let card = deckOfCards.last!
+        let block = {
+            let card = self.deckOfCards.last!
             let xPos = player.card.position.x + (cos(player.card.zRotation) * 10)
             let yPos = player.card.position.y + (sin(player.card.zRotation) * 10)
             let moveCard = SKAction.move(to: CGPoint(x: xPos, y: yPos), duration: 0.5)
@@ -400,8 +400,14 @@ class GameScene: SKScene {
             card.zPosition = player.card.zPosition + 1
             player.card = card
             player.card.owner = player
-            cardsInPlay.append(card)
-            deckOfCards.removeLast()
+            self.cardsInPlay.append(card)
+            self.deckOfCards.removeLast()
+        }
+        if deckOfCards.count > 0 {
+            self.run(SKAction.run(block))
+        } else {
+            self.reloadDeck()
+            self.run(SKAction.sequence([SKAction.wait(forDuration: 52 * 0.05), SKAction.run(block)]))
         }
     }
     
@@ -446,6 +452,7 @@ class GameScene: SKScene {
         return x
     }
     
+    
     func placeDeckOnScreen() {
         var x: CGFloat = 1
         for card in deck.cards {
@@ -489,42 +496,48 @@ class GameScene: SKScene {
         }
         
         let block = {
-            let dealerHopper = CGFloat(self.roundNumber - 1)
-            let totalPlayers = CGFloat(self.GS.orderedPlayers.count)
-            let cardPlaces = CGFloat(self.playerLabels.count)
-            let angle: CGFloat = (((360 / totalPlayers) * (2 + cardPlaces + dealerHopper - CGFloat(self.playerIndexOrder))) - 90).toRadians()
-            
-            
-            print("Amount of players: \(self.GS.orderedPlayers.count)")
-            print("\(self.myPlayer.name)'s order is: \(self.playerIndexOrder)")
-            print("Player Labels: \(self.playerLabels.count)")
-            let position = CGPoint(x: centerPoint.x + (cos(angle) * radius), y: centerPoint.y + (sin(angle) * radius))
-            let actionMove = SKAction.move(to: position, duration: 0.5)
-            let actionRotate = SKAction.rotate(toAngle: (angle + 90.toRadians()), duration: 0.5)
-            
-            
-            let playerLabel = SKLabelNode(fontNamed: "Chalkboard SE")
-            let fivePercentWidth = self.frame.size.width * 0.05
-            let fivePercentHeight = self.frame.size.height * 0.05
-            playerLabel.text = self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + Int(dealerHopper + 1), range: self.GS.orderedPlayers.count)].name
-            playerLabel.fontSize = 12
-            playerLabel.position = CGPoint(x: position.x + (cos(angle) * ((self.deckOfCards.last!.size.width / 2) + fivePercentWidth)), y: position.y + (sin(angle) * ((self.deckOfCards.last!.size.height / 2) + fivePercentHeight)))
-            playerLabel.zRotation = angle + 90.toRadians()
-            playerLabel.zPosition = 1.0
-            self.addChild(playerLabel)
-            self.playerLabels.append(playerLabel)
-            
-            // If the player still has lives, give him a card
-            if self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + Int(dealerHopper), range: self.GS.orderedPlayers.count)].isStillInGame {
-                self.deckOfCards.last?.run(actionMove)
-                self.deckOfCards.last?.run(actionRotate)
-                self.cardsInPlay.append(self.deckOfCards.last!)
-                self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + Int(dealerHopper), range: self.GS.orderedPlayers.count)].card = self.deckOfCards.last!
-                self.deckOfCards.last!.owner = self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + Int(dealerHopper), range: self.GS.orderedPlayers.count)]
-                if self.deckOfCards.last!.owner.peerID == self.myPlayer.peerID {
-                    self.run(SKAction.sequence([SKAction.wait(forDuration: 0.6), SKAction.run({self.myPlayer.card.flip()})]))
+            let insideBlock = {
+                let dealerHopper = CGFloat(self.roundNumber - 1)
+                let totalPlayers = CGFloat(self.GS.orderedPlayers.count)
+                let cardPlaces = CGFloat(self.playerLabels.count)
+                let angle: CGFloat = (((360 / totalPlayers) * (2 + cardPlaces + dealerHopper - CGFloat(self.playerIndexOrder))) - 90).toRadians()
+                
+                print("Amount of players: \(self.GS.orderedPlayers.count)")
+                print("\(self.myPlayer.name)'s order is: \(self.playerIndexOrder)")
+                print("Player Labels: \(self.playerLabels.count)")
+                let position = CGPoint(x: centerPoint.x + (cos(angle) * radius), y: centerPoint.y + (sin(angle) * radius))
+                let actionMove = SKAction.move(to: position, duration: 0.5)
+                let actionRotate = SKAction.rotate(toAngle: (angle + 90.toRadians()), duration: 0.5)
+                
+                let playerLabel = SKLabelNode(fontNamed: "Chalkboard SE")
+                let fivePercentWidth = self.frame.size.width * 0.05
+                let fivePercentHeight = self.frame.size.height * 0.05
+                playerLabel.text = self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + Int(dealerHopper + 1), range: self.GS.orderedPlayers.count)].name
+                playerLabel.fontSize = 12
+                playerLabel.position = CGPoint(x: position.x + (cos(angle) * ((self.deckOfCards.last!.size.width / 2) + fivePercentWidth)), y: position.y + (sin(angle) * ((self.deckOfCards.last!.size.height / 2) + fivePercentHeight)))
+                playerLabel.zRotation = angle + 90.toRadians()
+                playerLabel.zPosition = 1.0
+                self.addChild(playerLabel)
+                self.playerLabels.append(playerLabel)
+                
+                // If the player still has lives, give him a card
+                if self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + Int(dealerHopper), range: self.GS.orderedPlayers.count)].isStillInGame {
+                    self.deckOfCards.last?.run(actionMove)
+                    self.deckOfCards.last?.run(actionRotate)
+                    self.cardsInPlay.append(self.deckOfCards.last!)
+                    self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + Int(dealerHopper), range: self.GS.orderedPlayers.count)].card = self.deckOfCards.last!
+                    self.deckOfCards.last!.owner = self.GS.orderedPlayers[self.loopableIndex(self.playerLabels.count + Int(dealerHopper), range: self.GS.orderedPlayers.count)]
+                    if self.deckOfCards.last!.owner.peerID == self.myPlayer.peerID {
+                        self.run(SKAction.sequence([SKAction.wait(forDuration: 0.6), SKAction.run({self.myPlayer.card.flip()})]))
+                    }
+                    self.deckOfCards.removeLast()
                 }
-                self.deckOfCards.removeLast()
+            }
+            if self.deckOfCards.count < 1 {
+                self.reloadDeck()
+                self.run(SKAction.sequence([SKAction.wait(forDuration: Double(self.trashDeck.cards.count + 2) * 0.05), SKAction.run(insideBlock)]))
+            } else {
+                self.run(SKAction.run(insideBlock))
             }
         }
         let wait = SKAction.wait(forDuration: 0.5)
@@ -532,8 +545,25 @@ class GameScene: SKScene {
         let sequence = SKAction.sequence([runBlock, wait])
         let actionRepeat = SKAction.repeat(sequence, count: GS.orderedPlayers.count)
         
+        print(self.trashDeck.cards.count)
+        print(self.deckOfCards.count)
         
         self.run(actionRepeat)
+    }
+    
+    func reloadDeck() {
+        trashDeck.shuffle()
+        trashDeck.shuffle()
+        self.deckOfCards = []
+        for card in 0 ..< trashDeck.cards.count {
+            if trashDeck.cards[card].texture == trashDeck.cards[card].frontTexture {
+                trashDeck.cards[card].flip()
+            }
+            let move = SKAction.move(to: deckPosition, duration: 0.05)
+            trashDeck.cards[card].zPosition = CGFloat(card)
+            trashDeck.cards[card].run(move)
+            self.deckOfCards.append(trashDeck.cards[card])
+        }
     }
     
     func runEndOfRoundFunctions() {
@@ -634,7 +664,7 @@ class GameScene: SKScene {
             card.run(rotateToStraight)
             card.zPosition = 60 - card.zPosition
             cardsInPlay.remove(at: cardsInPlay.index(of: card)!)
-            cardsInTrash.append(card)
+            trashDeck.cards.append(card)
             card.owner.card = nil
             card.owner = nil
         }
