@@ -20,13 +20,14 @@ protocol GameSceneDelegate {
 
 
 class ModiBlueToothService: NSObject {
-    fileprivate let ModiServiceType = "modii-service"
+    fileprivate let ModiServiceType = "example-service"
     fileprivate var myPeerID: MCPeerID
     fileprivate let serviceAdvertiser: MCNearbyServiceAdvertiser
     fileprivate let serviceBrowser: MCNearbyServiceBrowser
     
     var connectionSceneDelegate: ConnectionSceneDelegate?
     var gameSceneDelegate: GameSceneDelegate?
+    
     
     override init() {
         myPeerID = MCPeerID(displayName: GameStateSingleton.sharedInstance.deviceName)
