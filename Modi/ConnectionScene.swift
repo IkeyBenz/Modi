@@ -133,14 +133,6 @@ class ConnectionScene: SKScene {
         peerSix.position = CGPoint(x: tableViewImage.position.x + (tableViewImage.frame.size.width / 4), y: tableViewImage.position.y + (tableViewImage.frame.size.height * 0.1) - (tableViewImage.frame.size.height / 2))
         peerSeven.position = CGPoint(x: tableViewImage.position.x + (tableViewImage.frame.size.width / 4), y: tableViewImage.position.y - (tableViewImage.frame.size.height * 0.1) - (tableViewImage.frame.size.height / 2))
         
-        print(peerOne.position)
-        print(peerTwo.position)
-        print(peerThree.position)
-        print(peerFour.position)
-        print(peerFive.position)
-        print(peerSix.position)
-        print(peerSeven.position)
-        
     }
     
     
