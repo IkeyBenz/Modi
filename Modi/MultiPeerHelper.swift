@@ -16,7 +16,6 @@ protocol GameSceneDelegate {
     func playerTradedWithDeck(_ player: Player)
     func trashCards()
     func endRound()
-    
 }
 
 
@@ -28,7 +27,6 @@ class ModiBlueToothService: NSObject {
     
     var connectionSceneDelegate: ConnectionSceneDelegate?
     var gameSceneDelegate: GameSceneDelegate?
-    
     
     override init() {
         myPeerID = MCPeerID(displayName: GameStateSingleton.sharedInstance.deviceName)
