@@ -35,13 +35,6 @@ class Deck {
         var currentRank: String = ""
         var currentSuit: String = ""
         var buildingRanksString: Bool = true
-        var numberOfCards: Double = 0.0
-        
-        for character in str.characters {
-            if character == "." {
-                numberOfCards += 0.5
-            }
-        }
         
         for character in str.characters {
             if character != "." {
@@ -63,7 +56,7 @@ class Deck {
                 }
             }
         }
-        for n in 0 ..< Int(numberOfCards) {
+        for n in 0 ..< 52 {
             var z: Int = 1
             for rank in 0 ..< self.ranks.count {
                 if ranks[n] == self.ranks[rank] {
@@ -91,14 +84,12 @@ class Deck {
                 }
             }
         }
-        
-        
         for card in cards {
             cardsString += card.readableRank + "." + card.suit + "."
         }
         
     }
-    
+
     
     func shuffle() {
         var temp: [Card] = []

@@ -21,7 +21,7 @@ class Player {
     init(name: String, peerID: MCPeerID) {
         self.name = name
         self.peerID = peerID
-        self.lives = 20
+        self.lives = 3
     }
 
 }
