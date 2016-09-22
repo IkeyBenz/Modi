@@ -20,7 +20,7 @@ protocol GameSceneDelegate {
 
 
 class ModiBlueToothService: NSObject {
-    fileprivate let ModiServiceType = "example-service"
+    fileprivate let ModiServiceType = "test-service"
     fileprivate var myPeerID: MCPeerID
     fileprivate let serviceAdvertiser: MCNearbyServiceAdvertiser
     fileprivate let serviceBrowser: MCNearbyServiceBrowser
