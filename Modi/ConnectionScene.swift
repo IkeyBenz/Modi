@@ -13,6 +13,8 @@ class ConnectionScene: SKScene {
     var yourNameLabel = SKLabelNode(fontNamed: "Chalkboard SE")
     var waitingForPlayersLabel = SKLabelNode(fontNamed: "Chalkboard SE")
     var fontSize: CGFloat = 12
+    var instructions: SKSpriteNode!
+    var instructionsButton = SKSpriteNode(imageNamed: "ExitButton")
     
     var peerOne = SKLabelNode()
     var peerTwo = SKLabelNode()
@@ -30,6 +32,21 @@ class ConnectionScene: SKScene {
         
         if UIDevice.current.userInterfaceIdiom == .pad {fontSize = 16}
         else if UIDevice.current.userInterfaceIdiom == .phone {fontSize = 12}
+        
+        instructions = SKSpriteNode(color: UIColor.black, size: self.size)
+        instructions.position = CGPoint(x: self.frame.maxX / 2, y: self.frame.maxY / 2)
+        instructions.alpha = 0.8
+        instructions.zPosition = 75
+        instructions.isHidden = true
+        self.addChild(instructions)
+        
+        instructionsButton.xScale = 1.2
+        instructionsButton.yScale = 1.2
+        instructionsButton.position = CGPoint(x: self.frame.maxX - (instructionsButton.frame.width / 2) - 5, y: self.frame.maxY - (instructionsButton.frame.height / 2) - 5)
+        instructionsButton.zPosition = 80
+        self.addChild(instructionsButton)
+        
+        
         
         let background = SKSpriteNode(imageNamed: "Felt")
         background.size = self.frame.size
@@ -49,21 +66,23 @@ class ConnectionScene: SKScene {
         textFieldStamp.zPosition = 10
         
         
+        textFieldImage.centerRect = CGRect(x: 8.5 / 240, y: 7.5 / 32, width: 223 / 240, height: 17 / 32)
+        textFieldImage.anchorPoint = CGPoint(x: 0.0, y: 0.5)
+        textFieldImage.position = CGPoint(x: yourNameLabel.frame.maxX + 10, y: yourNameLabel.frame.midY)
+        textFieldImage.zPosition = 11
         
-        textField = UITextField(frame: CGRect(x: yourNameLabel.frame.maxX + 20, y: frame.height - yourNameLabel.position.y - 25, width: 400, height: 40))
+        
+
+        textField = UITextField(frame: CGRect(x: yourNameLabel.frame.maxX + 20, y: frame.height - yourNameLabel.position.y - 22, width: 400, height: 40))
+        textField.frame.size = textFieldImage.frame.size
         textField.placeholder = "Type your name here"
         textField.font = UIFont(name: "Chalkboard SE", size: fontSize)
         textField.textColor = UIColor.white
         textField.delegate = self
         textField.text = nil
-        
-        textFieldImage.centerRect = CGRect(x: 8.5 / 240, y: 7.5 / 32, width: 223 / 240, height: 17 / 32)
-        textFieldImage.anchorPoint = CGPoint(x: 0.0, y: 0.5)
-        textFieldImage.position = CGPoint(x: yourNameLabel.frame.maxX + 10, y: yourNameLabel.frame.midY - 2)
-        textFieldImage.zPosition = 11
         textFieldImage.xScale = ((frame.width * 0.85) - textFieldImage.frame.minX) / textFieldImage.frame.width
         
-    
+        
         
         waitingForPlayersLabel.text = "Type In Your Name Above"
         waitingForPlayersLabel.fontSize = 16
@@ -160,13 +179,22 @@ class ConnectionScene: SKScene {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
-            if startGamebutton.frame.contains(touch.location(in: self)) {
+            if buttonImage.frame.contains(touch.location(in: self)) {
                 if textFieldStamp.text == "" {
                     let moveUp = SKAction.moveBy(x: 0, y: 10, duration: 0.15)
                     let moveDown = SKAction.moveBy(x: 0, y: -10, duration: 0.15)
                     waitingForPlayersLabel.run(SKAction.sequence([moveUp, moveDown]))
                 } else {
                     buttonImage.texture = SKTexture(imageNamed: "ButtonPressed")
+                }
+            }
+            if instructionsButton.frame.contains(touch.location(in: self)) {
+                if instructions.isHidden {
+                    instructions.isHidden = false
+                    // Change question button image to exit button image
+                } else if !instructions.isHidden {
+                    instructions.isHidden = true
+                    // Change exit button image to question button image
                 }
             }
         }
@@ -194,7 +222,7 @@ class ConnectionScene: SKScene {
             GameStateSingleton.sharedInstance.deviceName = "Missing name"
             textFieldStamp.text = "Missing Name"
         }
-        textFieldStamp.position = CGPoint(x: textField.frame.origin.x + (textFieldStamp.frame.width / 2), y: yourNameLabel.position.y - 2)
+        textFieldStamp.position = CGPoint(x: textField.frame.origin.x + (textFieldStamp.frame.width / 2), y: yourNameLabel.position.y)
         textField.resignFirstResponder()
         textField.removeFromSuperview()
         
@@ -240,9 +268,16 @@ extension ConnectionScene: ConnectionSceneDelegate {
 }
 
 extension ConnectionScene: UITextFieldDelegate {
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        if textField.text != nil && textField.text != "" {
+            GameStateSingleton.sharedInstance.bluetoothService = nil
+            initializeBluetooth(textField)
+        }
+    }
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        GameStateSingleton.sharedInstance.bluetoothService = nil
-        initializeBluetooth(textField)
+        if textField.text != nil && textField.text != "" {
+            textField.resignFirstResponder()
+        }
         return true
     }
 }
