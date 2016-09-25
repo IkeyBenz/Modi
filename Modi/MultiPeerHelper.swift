@@ -20,13 +20,14 @@ protocol GameSceneDelegate {
 
 
 class ModiBlueToothService: NSObject {
-    fileprivate let ModiServiceType = "test-service"
+    fileprivate let ModiServiceType = "example-service"
     fileprivate var myPeerID: MCPeerID
     fileprivate let serviceAdvertiser: MCNearbyServiceAdvertiser
     fileprivate let serviceBrowser: MCNearbyServiceBrowser
     
     var connectionSceneDelegate: ConnectionSceneDelegate?
     var gameSceneDelegate: GameSceneDelegate?
+    var lastMessageSent: String = ""
     
     
     override init() {
@@ -53,11 +54,12 @@ class ModiBlueToothService: NSObject {
         return session
     }()
     
-    func sendData(_ string: String) {
+    func sendData(_ string: String, messageType: String) {
         if session.connectedPeers.count > 0 {
             var error : NSError?
             do {
                 try self.session.send(string.data(using: String.Encoding.utf8, allowLossyConversion: false)!, toPeers: session.connectedPeers, with: MCSessionSendDataMode.reliable)
+                self.lastMessageSent = messageType
             } catch let error1 as NSError {
                 error = error1
                 print("%@", "\(error)")
@@ -110,6 +112,18 @@ class ModiBlueToothService: NSObject {
         gameSceneDelegate?.updateLabel("\(player1.name) traded cards with \(player2.name)")
     }
     
+    func sendRecieptConfirmation(message: String, toPeer: MCPeerID) {
+        if session.connectedPeers.count > 0 {
+            var error : NSError?
+            do {
+                try self.session.send("confirmation\(message)".data(using: String.Encoding.utf8, allowLossyConversion: false)!, toPeers: [toPeer], with: MCSessionSendDataMode.reliable)
+            } catch let error1 as NSError {
+                error = error1
+                print("%@", "\(error)")
+            }
+        }
+    }
+    
 }
 
 extension ModiBlueToothService: MCNearbyServiceAdvertiserDelegate {
@@ -122,7 +136,7 @@ extension ModiBlueToothService: MCNearbyServiceAdvertiserDelegate {
         
         let isAlreadyPartOfGame: Bool = {
             for player in GameStateSingleton.sharedInstance.orderedPlayers {
-                if player.name == peerID.displayName {
+                if player.peerID == peerID {
                     return true
                 }
             }
@@ -131,7 +145,7 @@ extension ModiBlueToothService: MCNearbyServiceAdvertiserDelegate {
         
         let isntConnected: Bool = {
             for peer in session.connectedPeers {
-                if peer.displayName == peerID.displayName {
+                if peer == peerID {
                     return false
                 }
             }
@@ -197,17 +211,21 @@ extension ModiBlueToothService: MCSessionDelegate {
         let str = NSString(data: data, encoding: String.Encoding.utf8.rawValue) as! String
         
         if str == "gametime" {
+            self.sendRecieptConfirmation(message: "gametime", toPeer: peerID)
             connectionSceneDelegate?.gotoGame()
         }
         if str == "dealCards" {
+            self.sendRecieptConfirmation(message: "dealCards", toPeer: peerID)
             gameSceneDelegate?.dealPeersCards()
         }
 
         if str == "trash" {
+            self.sendRecieptConfirmation(message: "trash", toPeer: peerID)
             gameSceneDelegate?.trashCards()
         }
         
         if str == "endRound" {
+            self.sendRecieptConfirmation(message: "endRound", toPeer: peerID)
             gameSceneDelegate?.endRound()
         }
         
@@ -257,6 +275,11 @@ extension ModiBlueToothService: MCSessionDelegate {
             if str.substring(to: str.characters.index(str.startIndex, offsetBy: 12)) == "playerTraded" {
                 let string = str.replacingOccurrences(of: "playerTraded", with: "")
                 self.handleCardSwapUsingString(string)
+            }
+            
+            if str.substring(to: str.characters.index(str.startIndex, offsetBy: 12)) == "confirmation" {
+                let message = str.replacingOccurrences(of: "confirmation", with: "")
+                print("Recieved confirmation of \(message) from \(peerID.displayName)")
             }
             
             if str.substring(to: str.characters.index(str.startIndex, offsetBy: 13)) == "currentDealer" {

@@ -17,6 +17,7 @@ class Player {
     var peerID: MCPeerID
     var lives: Int
     var isStillInGame: Bool = true
+    var wasAlreadyEjectedFromTheLeaderboard: Bool = false
     
     init(name: String, peerID: MCPeerID) {
         self.name = name

@@ -8,15 +8,6 @@
 
 import SpriteKit
 
-//  NEXT MOVE:
-//  - DISABLE TRADING WITH KINGS
-//  - IF PLAYER IS FIRST IN ORDER (IF PLAYER IS THE DEALER) HE SWITCHES WITH THE DECK AND THE ROUND ENDS
-//  - LET THAT RUN IN AN ENDLESS LOOP UNTIL ONLY ONE LIFE REMAINS
-
-
-// FIX THE ENDOFROUND FUNCTION
-// YOU CALLED IT NINE DIFFERENT TIMES, FUCKHEAD.
-
 class GameScene: SKScene {
     
     let GS = GameStateSingleton.sharedInstance
@@ -48,6 +39,14 @@ class GameScene: SKScene {
     var blackBackground: SKSpriteNode!
     var universalFontSize: CGFloat = 12
     var universalBigFontSize: CGFloat = 12
+    var isWaitingToDealCards: Bool = false
+    var isStillLoadingCards: Bool = false {
+        didSet {
+            if isWaitingToDealCards && !isStillLoadingCards {
+                self.dealCards()
+            }
+        }
+    }
 
     
     
@@ -114,7 +113,7 @@ class GameScene: SKScene {
         
         if GS.currentDealer.peerID == myPlayer.peerID {
             deck.shuffle()
-            GS.bluetoothService.sendData("deckString" + deck.cardsString)
+            GS.bluetoothService.sendData("deckString" + deck.cardsString, messageType: "deckString")
             placeDeckOnScreen()
         }
         
@@ -247,8 +246,8 @@ class GameScene: SKScene {
             cellView.zPosition = 11
             self.addChild(cellView)
             self.addChild(playerLabel)
-            if playersInOrderOfLives[x].lives == 0 {
-                
+            
+            if playersInOrderOfLives[x].lives == 0 && !playersInOrderOfLives[x].wasAlreadyEjectedFromTheLeaderboard {
                 playerLabel.run(SKAction.sequence([SKAction.wait(forDuration: 1), SKAction.run({playerLabel.fontColor = UIColor.red})]))
                 playerLabel.run(SKAction.sequence([SKAction.wait(forDuration: 1), fadeLabel]))
                 self.run(SKAction.sequence([SKAction.wait(forDuration: 3), removeLabel]))
@@ -257,6 +256,7 @@ class GameScene: SKScene {
                         losers.append(player)
                     }
                 }
+                playersInOrderOfLives[x].wasAlreadyEjectedFromTheLeaderboard = true
             }
             leaderBoardComponenets.append(cellView)
             playerLabelsInLeaderBoard.append(playerLabel)
@@ -266,9 +266,11 @@ class GameScene: SKScene {
     func removeLeaderBoard() {
         for sprite in leaderBoardComponenets {
             sprite.removeFromParent()
+            leaderBoardComponenets.remove(at: leaderBoardComponenets.index(of: sprite)!)
         }
         for label in playerLabelsInLeaderBoard {
             label.removeFromParent()
+            playerLabelsInLeaderBoard.remove(at: playerLabelsInLeaderBoard.index(of: label)!)
         }
     }
     
@@ -287,25 +289,24 @@ class GameScene: SKScene {
         let endMyTurn = SKAction.sequence([waitFor2, nextPlayerGoes])
         for touch in touches {
             
-            if atPoint(touch.location(in: self)) == dealButton {
+            if atPoint(touch.location(in: self)) == dealButtonImage {
                 dealCards()
-                GS.bluetoothService.sendData("dealCards")
+                GS.bluetoothService.sendData("dealCards", messageType: "dealCards")
                 dealButton.removeFromParent()
                 dealButtonImage.removeFromParent()
-//                self.run(endMyTurn)
             }
-            if atPoint(touch.location(in: self)) == stickButton {
-                GS.bluetoothService.sendData("updateLabel\(myPlayer.name) stuck")
+            if atPoint(touch.location(in: self)) == stickButtonImage {
+                GS.bluetoothService.sendData("updateLabel\(myPlayer.name) stuck", messageType: "updateLabel")
                 self.updateLabel.text = "\(myPlayer.name) stuck"
                 if myPlayer.peerID == GS.currentDealer.peerID {
                     self.runEndOfRoundFunctions()
-                    GS.bluetoothService.sendData("endRound")
+                    GS.bluetoothService.sendData("endRound", messageType: "endRound")
                 } else {
                     self.run(endMyTurn)
                 }
                 self.removePlayerOptions()
             }
-            if atPoint(touch.location(in: self)) == tradeButton {
+            if atPoint(touch.location(in: self)) == tradeButtonImage {
                 var x = 0
                 var nextPlayer = self.GS.orderedPlayers[self.loopableIndex(self.playerIndexOrder, range: self.GS.orderedPlayers.count)]
                 while nextPlayer.isStillInGame == false {
@@ -317,19 +318,19 @@ class GameScene: SKScene {
                     if myPlayer.card.readableRank == "King" || nextPlayer.card.readableRank == "King" {
                         if myPlayer.card.readableRank == "King" {
                             self.updateLabel.text = "You can't trade your king!"
-                            GS.bluetoothService.sendData("updateLabel\(myPlayer.name) stuck")
+                            GS.bluetoothService.sendData("updateLabel\(myPlayer.name) stuck", messageType: "updateLabel")
                             self.run(endMyTurn)
                         }
                         if nextPlayer.card.readableRank == "King" {
                             self.updateLabel.text = "\(nextPlayer.name) has a king!"
-                            GS.bluetoothService.sendData("updateLabel\(myPlayer.name) tried to swap with \(playersStillInTheGame[loopableIndex(playerIndexOrder, range: playersStillInTheGame.count)].name)")
+                            GS.bluetoothService.sendData("updateLabel\(myPlayer.name) tried to swap with \(playersStillInTheGame[loopableIndex(playerIndexOrder, range: playersStillInTheGame.count)].name)", messageType: "updateLabel")
                             self.run(endMyTurn)
                         }
                     } else {
                         let actions = {
                             
                             self.tradeCardWithPlayer(self.myPlayer, playerTwo: nextPlayer)
-                            self.GS.bluetoothService.sendData("playerTraded\(self.myPlayer.name).\(nextPlayer.name)")
+                            self.GS.bluetoothService.sendData("playerTraded\(self.myPlayer.name).\(nextPlayer.name)", messageType: "playerTraded")
                             self.updateLabel.text = "\(self.myPlayer.name) traded cards with \(nextPlayer.name)"
                             self.run(endMyTurn)
                         }
@@ -343,21 +344,21 @@ class GameScene: SKScene {
                     if myPlayer.card.readableRank != "King" {
                         if self.deckOfCards.count > 0 {
                             self.tradeCardWithDeck(myPlayer)
-                            GS.bluetoothService.sendData("hittingDeck\(myPlayer.name)")
+                            GS.bluetoothService.sendData("hittingDeck\(myPlayer.name)", messageType: "hittingDeck")
                         } else {
                             let reloadDeck = SKAction.run({self.reloadDeck(initiator: true)})
                             let wait = SKAction.wait(forDuration: Double(self.cardsInTrash.count) * 0.01)
                             let hitDeck = SKAction.run({self.tradeCardWithDeck(self.myPlayer)})
-                            let tellOtherPlayersImHitting = SKAction.run({self.GS.bluetoothService.sendData("hittingDeck\(self.myPlayer.name)")})
+                            let tellOtherPlayersImHitting = SKAction.run({self.GS.bluetoothService.sendData("hittingDeck\(self.myPlayer.name)", messageType: "hittingDeck")})
                             self.run(SKAction.sequence([reloadDeck, wait, hitDeck, tellOtherPlayersImHitting]))
                         }
                     } else {
                         self.updateLabel.text = "You can't trade your king!"
-                        self.GS.bluetoothService.sendData("updateLabel\(myPlayer.name) stuck.")
+                        self.GS.bluetoothService.sendData("updateLabel\(myPlayer.name) stuck.", messageType: "updateLabel")
                     }
                     
                     let wait  = SKAction.wait(forDuration: 3)
-                    let block = SKAction.run({self.runEndOfRoundFunctions(); self.GS.bluetoothService.sendData("endRound")})
+                    let block = SKAction.run({self.runEndOfRoundFunctions(); self.GS.bluetoothService.sendData("endRound", messageType: "endRound")})
                     self.run(SKAction.sequence([wait, block]))
                     if self.deckOfCards.count < 1 {
                         self.reloadDeck(initiator: true)
@@ -397,8 +398,8 @@ class GameScene: SKScene {
         while GS.orderedPlayers[loopableIndex(playerIndexOrder + x, range: GS.orderedPlayers.count)].isStillInGame == false {
             x += 1
         }
-        GS.bluetoothService.sendData("updateLabelIt's \(GS.orderedPlayers[loopableIndex(playerIndexOrder + x, range: GS.orderedPlayers.count)].name)'s turn to go.")
-        GS.bluetoothService.sendData("playersTurn\(GS.orderedPlayers[loopableIndex(playerIndexOrder + x, range: GS.orderedPlayers.count)].name)")
+        GS.bluetoothService.sendData("updateLabelIt's \(GS.orderedPlayers[loopableIndex(playerIndexOrder + x, range: GS.orderedPlayers.count)].name)'s turn to go.", messageType: "updateLabel")
+        GS.bluetoothService.sendData("playersTurn\(GS.orderedPlayers[loopableIndex(playerIndexOrder + x, range: GS.orderedPlayers.count)].name)", messageType: "playersTurn")
         self.updateLabel.text = "It's \(GS.orderedPlayers[loopableIndex(playerIndexOrder + x, range: GS.orderedPlayers.count)].name)'s turn to go."
     }
     
@@ -478,6 +479,7 @@ class GameScene: SKScene {
     }
     
     func placeDeckOnScreen() {
+        self.isStillLoadingCards = true
         self.deckOfCards = []
         var x: CGFloat = 1
         for card in deck.cards {
@@ -490,8 +492,17 @@ class GameScene: SKScene {
             self.deckOfCards[z].run(move)
             z += 1
         })
+        let showDealButton = SKAction.run({
+            if self.roundNumber == 1 {
+                self.addChild(self.dealButton)
+                self.addChild(self.dealButtonImage)
+                self.updateLabel.text = "\(self.myPlayer.name) is dealing the cards"
+                self.GS.bluetoothService.sendData("updateLabel\(self.myPlayer.name) is dealing the cards", messageType: "updateLabel")
+
+            }
+        })
         let actionRepeat = SKAction.repeat(SKAction.sequence([moveCard, SKAction.wait(forDuration: 0.075)]), count: self.deckOfCards.count)
-        self.run(actionRepeat)
+        self.run(SKAction.sequence([actionRepeat, showDealButton, SKAction.run({self.isStillLoadingCards = false})]))
         
     }
     func resizeCard(_ card: Card) -> CGSize {
@@ -585,7 +596,7 @@ class GameScene: SKScene {
                     let wait = SKAction.wait(forDuration: 0.1 * Double(self.cardsInTrash.count))
                     let continueDealing = SKAction.sequence([SKAction.run(insideBlock), SKAction.wait(forDuration: 0.5)])
                     let repeatDealing = SKAction.repeat(continueDealing, count: self.GS.orderedPlayers.count - self.playerLabels.count)
-                    let tellOtherPlayersToRepeatDealing = SKAction.run({self.GS.bluetoothService.sendData("dealCards")})
+                    let tellOtherPlayersToRepeatDealing = SKAction.run({self.GS.bluetoothService.sendData("dealCards", messageType: "dealCards")})
                     self.reloadDeck(initiator: true)
                     
                     self.run(SKAction.sequence([wait, repeatDealing, tellOtherPlayersToRepeatDealing, endMyTurn]))
@@ -609,7 +620,7 @@ class GameScene: SKScene {
             self.deck = Deck(withCards: self.cardsInTrash)
             deck.shuffle()
             deck.shuffle()
-            GS.bluetoothService.sendData("deckString\(self.deck.cardsString)")
+            GS.bluetoothService.sendData("deckString\(self.deck.cardsString)", messageType: "updateLabel")
         }
 
         for card in deckOfCards {
@@ -749,10 +760,11 @@ class GameScene: SKScene {
             let removeLabel = SKAction.run({self.roundLabel.removeFromParent()})
             self.run(SKAction.sequence([wait, addRoundLabel, wait, removeLabel]))
             
-            if myPlayer.peerID == GS.currentDealer.peerID {
+            if myPlayer.peerID == GS.currentDealer.peerID && roundNumber != 1 {
                 updateLabel.text = "\(myPlayer.name) is dealing the cards"
-                GS.bluetoothService.sendData("updateLabel\(myPlayer.name) is dealing the cards")
+                GS.bluetoothService.sendData("updateLabel\(myPlayer.name) is dealing the cards", messageType: "updateLabel")
                 let waitForthree = SKAction.wait(forDuration: 3)
+                
                 let addDealButton = SKAction.run({self.addChild(self.dealButton); self.addChild(self.dealButtonImage)})
                 self.run(SKAction.sequence([waitForthree, addDealButton]))
             }
@@ -810,7 +822,11 @@ extension GameScene: GameSceneDelegate {
         reloadDeck(initiator: false)
     }
     func dealPeersCards() {
-        self.dealCards()
+        if isStillLoadingCards {
+            isWaitingToDealCards = true
+        } else {
+            self.dealCards()
+        }
     }
     func updateLabel(_ str: String) {
         self.updateLabel.text = str

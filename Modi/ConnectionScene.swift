@@ -176,10 +176,10 @@ class ConnectionScene: SKScene {
         for touch in touches {
             if startGamebutton.frame.contains(touch.location(in: self)) {
                 if textFieldStamp.text != "" {
-                    GameStateSingleton.sharedInstance.bluetoothService.sendData(orderedPlayersString())
-                    GameStateSingleton.sharedInstance.bluetoothService.sendData("currentDealer\(GameStateSingleton.sharedInstance.bluetoothService.session.myPeerID.displayName)")
+                    GameStateSingleton.sharedInstance.bluetoothService.sendData(orderedPlayersString(), messageType: "playerOrderString")
+                    GameStateSingleton.sharedInstance.bluetoothService.sendData("currentDealer\(GameStateSingleton.sharedInstance.bluetoothService.session.myPeerID.displayName)", messageType: "currentDealer")
                     GameStateSingleton.sharedInstance.currentDealer = GameStateSingleton.sharedInstance.orderedPlayers[0]
-                    GameStateSingleton.sharedInstance.bluetoothService.sendData("gametime")
+                    GameStateSingleton.sharedInstance.bluetoothService.sendData("gametime", messageType: "gametime")
                     self.goToGameScene()
                 }
             }
