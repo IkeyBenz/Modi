@@ -13,8 +13,9 @@ class ConnectionScene: SKScene {
     var yourNameLabel = SKLabelNode(fontNamed: "Chalkboard SE")
     var waitingForPlayersLabel = SKLabelNode(fontNamed: "Chalkboard SE")
     var fontSize: CGFloat = 12
-    var instructions: SKSpriteNode!
-    var instructionsButton = SKSpriteNode(imageNamed: "ExitButton")
+    var instructions = SKSpriteNode(imageNamed: "Felt")
+    var instructionsButton = SKSpriteNode(imageNamed: "QuestionMark")
+    var instructionsLabel: UILabel!
     
     var peerOne = SKLabelNode()
     var peerTwo = SKLabelNode()
@@ -33,12 +34,21 @@ class ConnectionScene: SKScene {
         if UIDevice.current.userInterfaceIdiom == .pad {fontSize = 16}
         else if UIDevice.current.userInterfaceIdiom == .phone {fontSize = 12}
         
-        instructions = SKSpriteNode(color: UIColor.black, size: self.size)
+        //instructions = SKSpriteNode(color: UIColor.black, size: self.size)
+        instructions.size = self.frame.size
         instructions.position = CGPoint(x: self.frame.maxX / 2, y: self.frame.maxY / 2)
-        instructions.alpha = 0.8
+        instructions.alpha = 0.9
         instructions.zPosition = 75
         instructions.isHidden = true
         self.addChild(instructions)
+        
+        instructionsLabel = UILabel(frame: self.frame)
+        instructionsLabel.numberOfLines = 0
+        instructionsLabel.textColor = UIColor.white
+        instructionsLabel.font = UIFont(name: "Chalkboard SE", size: fontSize + 5)
+        instructionsLabel.text = "Connect Over A Wifi Network: \n\t- Turn wifi ON for ALL devices\n\t- Make sure all devices are connected to\n\t  the same wifi network\n\nConnect Without A Wifi Network:\n\t- Turn wifi ON for ALL devices\n\t- Every device must be disconnected from\n\t  any nearby wifi networks"
+        
+        instructionsLabel.frame.origin = CGPoint(x: self.frame.maxX * 0.15, y: 0)
         
         instructionsButton.xScale = 1.2
         instructionsButton.yScale = 1.2
@@ -191,10 +201,12 @@ class ConnectionScene: SKScene {
             if instructionsButton.frame.contains(touch.location(in: self)) {
                 if instructions.isHidden {
                     instructions.isHidden = false
-                    // Change question button image to exit button image
+                    self.view?.addSubview(instructionsLabel)
+                    instructionsButton.texture = SKTexture(imageNamed: "ExitButton")
                 } else if !instructions.isHidden {
                     instructions.isHidden = true
-                    // Change exit button image to question button image
+                    instructionsLabel.removeFromSuperview()
+                    instructionsButton.texture = SKTexture(imageNamed: "QuestionMark")
                 }
             }
         }

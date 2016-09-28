@@ -27,7 +27,6 @@ class ModiBlueToothService: NSObject {
     
     var connectionSceneDelegate: ConnectionSceneDelegate?
     var gameSceneDelegate: GameSceneDelegate?
-    var lastMessageSent: String = ""
     
     
     override init() {
@@ -59,7 +58,10 @@ class ModiBlueToothService: NSObject {
             var error : NSError?
             do {
                 try self.session.send(string.data(using: String.Encoding.utf8, allowLossyConversion: false)!, toPeers: session.connectedPeers, with: MCSessionSendDataMode.reliable)
-                self.lastMessageSent = messageType
+                    // If session.connectedPeers.count != GameStateSingleton.sharedInstance().orderedPlayers.count {
+                    //      See who is missing and save them in an instance variable of Modibluetooth
+                    //      When connectedDevicesDidChange, if one of the people who were missing are now connected, send them the message.
+                    // }
             } catch let error1 as NSError {
                 error = error1
                 print("%@", "\(error)")
