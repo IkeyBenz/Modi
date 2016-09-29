@@ -28,6 +28,8 @@ class ModiBlueToothService: NSObject {
     var connectionSceneDelegate: ConnectionSceneDelegate?
     var gameSceneDelegate: GameSceneDelegate?
     var privateLobbyCode: String = GameStateSingleton.sharedInstance.bluetoothServiceName.lowercased() + "-modi"
+    var waitingToSendInfo: Bool = false
+    var infoWaitingToBeSent: [String] = []
     
     override init() {
         myPeerID = MCPeerID(displayName: GameStateSingleton.sharedInstance.deviceName)
@@ -55,55 +57,62 @@ class ModiBlueToothService: NSObject {
     }()
     
     var everyOneAliveIsStillConnected: Bool {
+        var players: [Player] = {
+            var temp: [Player] = []
+            for player in GameStateSingleton.sharedInstance.playersStillInGame {
+                if player.peerID != myPeerID {
+                    temp.append(player)
+                }
+            }
+            return temp
+        }()
         var trueOrFalse: Bool = false
         var playersConnectedTruthValues: [Bool] {
             var temp: [Bool] = []
-            for _ in GameStateSingleton.sharedInstance.playersStillInGame {
+            for _ in players {
                 temp.append(false)
             }
             
-            for player in 0 ..< GameStateSingleton.sharedInstance.playersStillInGame.count {
+            for player in 0 ..< players.count {
                 for peerID in self.session.connectedPeers {
-                    if GameStateSingleton.sharedInstance.playersStillInGame[player].peerID == peerID {
+                    if players[player].peerID == peerID {
                         temp[player] = true
                     }
                 }
             }
+            print(temp)
             return temp
         }
         
         for boolValue in playersConnectedTruthValues {
+            print("boolValue = \(boolValue)")
             if boolValue == false {
                 return false
             }
         }
-        
         return true
     }
     
+    
     func sendData(_ string: String, messageType: String) {
-        if session.connectedPeers.count > 0 {
-            var error : NSError?
-            do {
-<<<<<<< Updated upstream
-                //If connnected Devices Peers == GS.orderedPeers then send
+        
+        var error : NSError?
+        do {
+            print("SENDING MESSAGE")
+            if everyOneAliveIsStillConnected {
                 try self.session.send(string.data(using: String.Encoding.utf8, allowLossyConversion: false)!, toPeers: session.connectedPeers, with: MCSessionSendDataMode.reliable)
-                // Else change update label to "waitingFor \(missingPeers)..."
-=======
-                if everyOneAliveIsStillConnected  && GameStateSingleton.sharedInstance.gameLoaded == true {
-                    try self.session.send(string.data(using: String.Encoding.utf8, allowLossyConversion: false)!, toPeers: session.connectedPeers, with: MCSessionSendDataMode.reliable)
-                } else {
-                    print("Not Everyone Is Connected")
-                }
-                    //      See who is missing and save them in an instance variable of Modibluetooth
-                    //      When connectedDevicesDidChange, if one of the people who were missing are now connected, send them the message.
-                    // }
->>>>>>> Stashed changes
-            } catch let error1 as NSError {
-                error = error1
-                print("%@", "\(error)")
+            } else {
+                print("Not Everyone Is Connected")
+                infoWaitingToBeSent.append(string)
+                print(infoWaitingToBeSent)
             }
+            
+            
+        } catch let error1 as NSError {
+            error = error1
+            print("%@", "\(error)")
         }
+        
     }
 
     func peerStringsArray(_ str: String) -> [String] {
@@ -197,6 +206,7 @@ extension ModiBlueToothService: MCNearbyServiceBrowserDelegate {
     }
     func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         print("Lost peer: \(peerID.displayName)")
+        
     }
     
 }
@@ -298,6 +308,13 @@ extension ModiBlueToothService: MCSessionDelegate {
             serviceBrowser.invitePeer(peerID, to: self.session, withContext: nil, timeout: 30)
         }
         self.connectionSceneDelegate?.connectedDevicesChanged(self, connectedDevices: session.connectedPeers.map({$0.displayName}))
+        
+        if everyOneAliveIsStillConnected {
+            for message in infoWaitingToBeSent {
+                sendData(message, messageType: "")
+                print(message)
+            }
+        }
         
     }
     

@@ -34,6 +34,7 @@ class GameScene: SKScene {
     var playerLabelsInLeaderBoard: [SKLabelNode] = []
     var leaderBoardComponenets: [SKSpriteNode] = []
     var playersInOrderOfLives: [Player] = []
+    var playerOptionsEnabled: Bool = false
     var playersStillInTheGame: [Player] = [] {
         didSet {
             GameStateSingleton.sharedInstance.playersStillInGame = playersStillInTheGame
@@ -54,6 +55,7 @@ class GameScene: SKScene {
     }
 
     var nextAction: SKAction!
+    
     
     
     
@@ -305,7 +307,7 @@ class GameScene: SKScene {
                 dealButtonImage.removeFromParent()
                 
             }
-            if stickButtonImage.frame.contains(touch.location(in: self)) {
+            if stickButtonImage.frame.contains(touch.location(in: self)) && playerOptionsEnabled {
                 GS.bluetoothService.sendData("updateLabel\(myPlayer.name) stuck", messageType: "updateLabel")
                 self.updateLabel.text = "\(myPlayer.name) stuck"
                 if myPlayer.peerID == GS.currentDealer.peerID {
@@ -316,7 +318,7 @@ class GameScene: SKScene {
                 }
                 self.removePlayerOptions()
             }
-            if tradeButtonImage.frame.contains(touch.location(in: self)) {
+            if tradeButtonImage.frame.contains(touch.location(in: self)) && playerOptionsEnabled {
                 var x = 0
                 var nextPlayer = self.GS.orderedPlayers[self.loopableIndex(self.playerIndexOrder, range: self.GS.orderedPlayers.count)]
                 while nextPlayer.isStillInGame == false {
@@ -388,17 +390,20 @@ class GameScene: SKScene {
     }
     
     func showPlayerOptions() {
-        self.addChild(stickButton)
-        self.addChild(stickButtonImage)
-        self.addChild(tradeButton)
-        self.addChild(tradeButtonImage)
+        playerOptionsEnabled = true
+        stickButton.isHidden = false
+        stickButtonImage.isHidden = false
+        tradeButton.isHidden = false
+        tradeButtonImage.isHidden = false
+        
     }
     
     func removePlayerOptions() {
-        stickButton.removeFromParent()
-        stickButtonImage.removeFromParent()
-        tradeButton.removeFromParent()
-        tradeButtonImage.removeFromParent()
+        playerOptionsEnabled = false
+        stickButton.isHidden = true
+        stickButtonImage.isHidden = true
+        tradeButton.isHidden = true
+        tradeButtonImage.isHidden = true
     }
     
     func nextPlayerGoes() {
