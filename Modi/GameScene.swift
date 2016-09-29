@@ -34,7 +34,11 @@ class GameScene: SKScene {
     var playerLabelsInLeaderBoard: [SKLabelNode] = []
     var leaderBoardComponenets: [SKSpriteNode] = []
     var playersInOrderOfLives: [Player] = []
-    var playersStillInTheGame: [Player] = []
+    var playersStillInTheGame: [Player] = [] {
+        didSet {
+            GameStateSingleton.sharedInstance.playersStillInGame = playersStillInTheGame
+        }
+    }
     var itsTheEndOfTheGame: Bool = false
     var losers: [Player] = []
     var blackBackground: SKSpriteNode!
@@ -758,6 +762,9 @@ class GameScene: SKScene {
     func runBeginingOfRoundFunctions() {
         if  !itsTheEndOfTheGame {
             roundNumber  = roundNumber + 1
+            if roundNumber == 1 {
+                GS.gameLoaded = true
+            }
             roundLabel.text = "Round \(roundNumber)"
             
             let wait = SKAction.wait(forDuration: 1.5)

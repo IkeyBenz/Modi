@@ -18,6 +18,7 @@ class GameStateSingleton {
         case gameOver
     }
     
+    var gameLoaded: Bool = false
     var currentGameState: GameState = .waitingForPlayers
     var bluetoothService: ModiBlueToothService!
     var bluetoothServiceName: String! {
@@ -36,6 +37,6 @@ class GameStateSingleton {
     var playersDictionary: [String : MCPeerID] = [:]
     var myPlayer: Player!
     var currentDealer: Player!
-    
+    var playersStillInGame: [Player] = []
     
 }

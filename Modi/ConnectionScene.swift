@@ -34,7 +34,7 @@ class ConnectionScene: SKScene {
         
         
         let eightPercentHeight = self.frame.height * 0.07
-        
+    
         if UIDevice.current.userInterfaceIdiom == .pad {fontSize = 16}
         else if UIDevice.current.userInterfaceIdiom == .phone {fontSize = 12}
         

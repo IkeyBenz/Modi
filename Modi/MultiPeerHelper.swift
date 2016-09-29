@@ -54,13 +54,51 @@ class ModiBlueToothService: NSObject {
         return session
     }()
     
+    var everyOneAliveIsStillConnected: Bool {
+        var trueOrFalse: Bool = false
+        var playersConnectedTruthValues: [Bool] {
+            var temp: [Bool] = []
+            for _ in GameStateSingleton.sharedInstance.playersStillInGame {
+                temp.append(false)
+            }
+            
+            for player in 0 ..< GameStateSingleton.sharedInstance.playersStillInGame.count {
+                for peerID in self.session.connectedPeers {
+                    if GameStateSingleton.sharedInstance.playersStillInGame[player].peerID == peerID {
+                        temp[player] = true
+                    }
+                }
+            }
+            return temp
+        }
+        
+        for boolValue in playersConnectedTruthValues {
+            if boolValue == false {
+                return false
+            }
+        }
+        
+        return true
+    }
+    
     func sendData(_ string: String, messageType: String) {
         if session.connectedPeers.count > 0 {
             var error : NSError?
             do {
+<<<<<<< Updated upstream
                 //If connnected Devices Peers == GS.orderedPeers then send
                 try self.session.send(string.data(using: String.Encoding.utf8, allowLossyConversion: false)!, toPeers: session.connectedPeers, with: MCSessionSendDataMode.reliable)
                 // Else change update label to "waitingFor \(missingPeers)..."
+=======
+                if everyOneAliveIsStillConnected  && GameStateSingleton.sharedInstance.gameLoaded == true {
+                    try self.session.send(string.data(using: String.Encoding.utf8, allowLossyConversion: false)!, toPeers: session.connectedPeers, with: MCSessionSendDataMode.reliable)
+                } else {
+                    print("Not Everyone Is Connected")
+                }
+                    //      See who is missing and save them in an instance variable of Modibluetooth
+                    //      When connectedDevicesDidChange, if one of the people who were missing are now connected, send them the message.
+                    // }
+>>>>>>> Stashed changes
             } catch let error1 as NSError {
                 error = error1
                 print("%@", "\(error)")
