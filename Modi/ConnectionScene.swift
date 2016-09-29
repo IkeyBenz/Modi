@@ -6,13 +6,17 @@ class ConnectionScene: SKScene {
     let globalFont: String = "Chalkboard SE"
     let startGamebutton = SKLabelNode(fontNamed: "Chalkboard SE")
     var buttonImage = SKSpriteNode(imageNamed: "Button")
-    var textField: UITextField!
-    var textFieldStamp = SKLabelNode(fontNamed: "Chalkboard SE")
-    var textFieldImage = SKSpriteNode(imageNamed: "TextField")
+    var nameTextField: UITextField!
+    var nameTextFieldStamp = SKLabelNode(fontNamed: "Chalkboard SE")
+    var nameTextFieldImage = SKSpriteNode(imageNamed: "TextField")
     var tableViewImage = SKSpriteNode(imageNamed: "TextField")
     var yourNameLabel = SKLabelNode(fontNamed: "Chalkboard SE")
     var waitingForPlayersLabel = SKLabelNode(fontNamed: "Chalkboard SE")
     var fontSize: CGFloat = 12
+    var gameCodeLabel = SKLabelNode(fontNamed: "Chalkboard SE")
+    var gameCodeTextField: UITextField!
+    var gameCodeTextFieldStamp = SKLabelNode(fontNamed: "Chalkboard SE")
+    var gameCodeTextFieldImage = SKSpriteNode(imageNamed: "TextField")
     var instructions = SKSpriteNode(imageNamed: "Felt")
     var instructionsButton = SKSpriteNode(imageNamed: "QuestionMark")
     var instructionsLabel: UILabel!
@@ -70,33 +74,58 @@ class ConnectionScene: SKScene {
         yourNameLabel.zPosition = 10
         
         
-        textFieldStamp.text = ""
-        textFieldStamp.fontSize = fontSize
-        textFieldStamp.position = CGPoint(x: yourNameLabel.frame.maxX + 10 + (textFieldStamp.frame.width / 2), y: yourNameLabel.position.y)
-        textFieldStamp.zPosition = 10
+        nameTextFieldStamp.text = ""
+        nameTextFieldStamp.fontSize = fontSize
+        nameTextFieldStamp.position = CGPoint(x: yourNameLabel.frame.maxX + 20, y: yourNameLabel.position.y)
+        nameTextFieldStamp.zPosition = 10
         
         
-        textFieldImage.centerRect = CGRect(x: 8.5 / 240, y: 7.5 / 32, width: 223 / 240, height: 17 / 32)
-        textFieldImage.anchorPoint = CGPoint(x: 0.0, y: 0.5)
-        textFieldImage.position = CGPoint(x: yourNameLabel.frame.maxX + 10, y: yourNameLabel.frame.midY)
-        textFieldImage.zPosition = 11
-        
+        nameTextFieldImage.centerRect = CGRect(x: 8.5 / 240, y: 7.5 / 32, width: 223 / 240, height: 17 / 32)
+        nameTextFieldImage.anchorPoint = CGPoint(x: 0.0, y: 0.5)
+        nameTextFieldImage.position = CGPoint(x: yourNameLabel.frame.maxX + 10, y: yourNameLabel.frame.midY)
+        nameTextFieldImage.zPosition = 11
+        nameTextFieldImage.xScale = ((frame.width * 0.53) - nameTextFieldImage.frame.minX) / nameTextFieldImage.frame.width
         
 
-        textField = UITextField(frame: CGRect(x: yourNameLabel.frame.maxX + 20, y: frame.height - yourNameLabel.position.y - 22, width: 400, height: 40))
-        textField.frame.size = textFieldImage.frame.size
-        textField.placeholder = "Type your name here"
-        textField.font = UIFont(name: "Chalkboard SE", size: fontSize)
-        textField.textColor = UIColor.white
-        textField.delegate = self
-        textField.text = nil
-        textFieldImage.xScale = ((frame.width * 0.85) - textFieldImage.frame.minX) / textFieldImage.frame.width
+        nameTextField = UITextField(frame: CGRect(x: yourNameLabel.frame.maxX + 20, y: frame.height - yourNameLabel.position.y - 22, width: 400, height: 40))
+        nameTextField.frame.size = nameTextFieldImage.frame.size
+        nameTextField.placeholder = "Type your name here"
+        nameTextField.font = UIFont(name: "Chalkboard SE", size: fontSize)
+        nameTextField.textColor = UIColor.white
+        nameTextField.delegate = self
+        nameTextField.text = nil
+        nameTextField.tag = 100
+        
+        gameCodeLabel.text = "Game Code:"
+        gameCodeLabel.fontSize = fontSize
+        gameCodeLabel.position = CGPoint(x: nameTextFieldImage.frame.maxX + 10 + (gameCodeLabel.frame.width / 2), y: yourNameLabel.position.y)
+        gameCodeLabel.zPosition = 10
+        
+        gameCodeTextFieldImage.centerRect = CGRect(x: 8.5 / 240, y: 7.5 / 32, width: 223 / 240, height: 17 / 32)
+        gameCodeTextFieldImage.anchorPoint = CGPoint(x: 0.0, y: 0.5)
+        gameCodeTextFieldImage.position = CGPoint(x: gameCodeLabel.frame.maxX + 10, y: gameCodeLabel.frame.midY)
+        gameCodeTextFieldImage.zPosition = 11
+        gameCodeTextFieldImage.xScale = ((frame.width * 0.85) - gameCodeTextFieldImage.frame.minX) / gameCodeTextFieldImage.frame.width
+        
+        gameCodeTextField = UITextField(frame: CGRect(x: gameCodeLabel.frame.maxX + 20, y: frame.height - gameCodeLabel.position.y - 22, width: 400, height: 40))
+        gameCodeTextField.placeholder = "xyz"
+        gameCodeTextField.font = UIFont(name: "Chalkboard SE", size: self.fontSize)
+        gameCodeTextField.textColor = UIColor.white
+        gameCodeTextField.delegate = self
+        gameCodeTextField.text = nil
+        gameCodeTextField.tag = 101
+        
+        gameCodeTextFieldStamp.text = ""
+        gameCodeTextFieldStamp.fontSize = 12
+        gameCodeTextFieldStamp.position = CGPoint(x: gameCodeLabel.frame.maxX + 20, y: gameCodeLabel.position.y)
+        gameCodeTextFieldStamp.zPosition = 10
         
         
         
-        waitingForPlayersLabel.text = "Type In Your Name Above"
+        
+        waitingForPlayersLabel.text = "Enter Your Name And Game Code"
         waitingForPlayersLabel.fontSize = 16
-        waitingForPlayersLabel.position = CGPoint(x: frame.width / 2, y: textFieldImage.position.y - (textFieldImage.frame.height / 2) - (waitingForPlayersLabel.frame.height / 2) - eightPercentHeight)
+        waitingForPlayersLabel.position = CGPoint(x: frame.width / 2, y: nameTextFieldImage.position.y - (nameTextFieldImage.frame.height / 2) - (waitingForPlayersLabel.frame.height / 2) - eightPercentHeight)
         waitingForPlayersLabel.zPosition = 10
         
 
@@ -107,8 +136,8 @@ class ConnectionScene: SKScene {
         startGamebutton.zPosition = 11
         
         
-        if UIDevice.current.userInterfaceIdiom == .phone {waitingForPlayersLabel.fontSize = 14; self.fontSize = 14; yourNameLabel.fontSize = 12; textField.minimumFontSize = 12; textFieldStamp.fontSize = 12}
-        else if UIDevice.current.userInterfaceIdiom == .pad {waitingForPlayersLabel.fontSize = 20; self.fontSize = 30; yourNameLabel.fontSize = 18; textField.minimumFontSize = 18; textFieldStamp.fontSize = 18; startGamebutton.fontSize = 35}
+        if UIDevice.current.userInterfaceIdiom == .phone {waitingForPlayersLabel.fontSize = 14; self.fontSize = 14; yourNameLabel.fontSize = 12; nameTextField.minimumFontSize = 12; nameTextFieldStamp.fontSize = 12}
+        else if UIDevice.current.userInterfaceIdiom == .pad {waitingForPlayersLabel.fontSize = 20; self.fontSize = 30; yourNameLabel.fontSize = 18; nameTextField.minimumFontSize = 18; nameTextFieldStamp.fontSize = 18; startGamebutton.fontSize = 35}
 
         
         buttonImage.zPosition = 10
@@ -132,14 +161,18 @@ class ConnectionScene: SKScene {
         
         
         self.addChild(yourNameLabel)
-        self.addChild(textFieldStamp)
-        self.addChild(textFieldImage)
+        self.addChild(nameTextFieldStamp)
+        self.addChild(nameTextFieldImage)
         self.addChild(tableViewImage)
         self.addChild(waitingForPlayersLabel)
         self.addChild(background)
         self.addChild(startGamebutton)
         self.addChild(buttonImage)
-        view.addSubview(textField)
+        self.addChild(gameCodeLabel)
+        self.addChild(gameCodeTextFieldStamp)
+        self.addChild(gameCodeTextFieldImage)
+        view.addSubview(gameCodeTextField)
+        view.addSubview(nameTextField)
         
         
 
@@ -190,7 +223,7 @@ class ConnectionScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             if buttonImage.frame.contains(touch.location(in: self)) {
-                if textFieldStamp.text == "" {
+                if GameStateSingleton.sharedInstance.bluetoothService == nil {
                     let moveUp = SKAction.moveBy(x: 0, y: 10, duration: 0.15)
                     let moveDown = SKAction.moveBy(x: 0, y: -10, duration: 0.15)
                     waitingForPlayersLabel.run(SKAction.sequence([moveUp, moveDown]))
@@ -215,7 +248,7 @@ class ConnectionScene: SKScene {
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             if startGamebutton.frame.contains(touch.location(in: self)) {
-                if textFieldStamp.text != "" {
+                if GameStateSingleton.sharedInstance.bluetoothService != nil {
                     GameStateSingleton.sharedInstance.bluetoothService.sendData(orderedPlayersString(), messageType: "playerOrderString")
                     GameStateSingleton.sharedInstance.bluetoothService.sendData("currentDealer\(GameStateSingleton.sharedInstance.bluetoothService.session.myPeerID.displayName)", messageType: "currentDealer")
                     GameStateSingleton.sharedInstance.currentDealer = GameStateSingleton.sharedInstance.orderedPlayers[0]
@@ -226,22 +259,13 @@ class ConnectionScene: SKScene {
             buttonImage.texture = SKTexture(imageNamed: "Button")
         }
     }
-    func initializeBluetooth(_ textField: UITextField) {
-        if textField.text != nil {
-            GameStateSingleton.sharedInstance.deviceName = textField.text!
-            textFieldStamp.text = textField.text!
-        } else {
-            GameStateSingleton.sharedInstance.deviceName = "Missing name"
-            textFieldStamp.text = "Missing Name"
-        }
-        textFieldStamp.position = CGPoint(x: textField.frame.origin.x + (textFieldStamp.frame.width / 2), y: yourNameLabel.position.y)
-        textField.resignFirstResponder()
-        textField.removeFromSuperview()
-        
+    func initializeBluetooth() {
+        GameStateSingleton.sharedInstance.deviceName = nameTextFieldStamp.text!
+        GameStateSingleton.sharedInstance.bluetoothServiceName = gameCodeTextFieldStamp.text!
         let modiService = ModiBlueToothService()
-        waitingForPlayersLabel.text = "Waiting For Players..."
         GameStateSingleton.sharedInstance.bluetoothService = modiService
         GameStateSingleton.sharedInstance.bluetoothService.connectionSceneDelegate = self
+        waitingForPlayersLabel.text = "Connecting To Nearby Players..."
     }
 }
 
@@ -281,15 +305,66 @@ extension ConnectionScene: ConnectionSceneDelegate {
 
 extension ConnectionScene: UITextFieldDelegate {
     func textFieldDidEndEditing(_ textField: UITextField) {
-        if textField.text != nil && textField.text != "" {
-            GameStateSingleton.sharedInstance.bluetoothService = nil
-            initializeBluetooth(textField)
+
+        if textField.tag == 100 {
+            if textField.text != nil && textField.text != "" {
+                nameTextFieldStamp.text = textField.text!
+                nameTextFieldStamp.position.x += (nameTextFieldStamp.frame.width / 2)
+                if gameCodeTextField.text == nil || gameCodeTextField.text == "" {
+                    gameCodeTextField.becomeFirstResponder()
+                } else {
+                    initializeBluetooth()
+                }
+                textField.removeFromSuperview()
+            }
+        }
+        
+        if textField.tag == 101 {
+            if textField.text != nil && textField.text != "" {
+                gameCodeTextFieldStamp.text = gameCodeTextField.text!
+                gameCodeTextFieldStamp.position.x += (gameCodeTextFieldStamp.frame.width / 2)
+                if nameTextField.text == nil || nameTextField.text == "" {
+                    nameTextField.becomeFirstResponder()
+                } else {
+                    initializeBluetooth()
+                }
+                textField.removeFromSuperview()
+            }
         }
     }
+    
+    
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        if textField.text != nil && textField.text != "" {
-            textField.resignFirstResponder()
+        
+        if textField.tag == 100 {
+            if textField.text != nil && textField.text != "" {
+                if gameCodeTextField.text == nil || gameCodeTextField.text == "" {
+                    self.gameCodeTextField.becomeFirstResponder()
+                } else {
+                    textField.resignFirstResponder()
+                }
+            }
+        }
+        
+        if textField.tag == 101 {
+            if textField.text != nil && textField.text != "" {
+                if nameTextField.text == nil || nameTextField.text == "" {
+                    self.nameTextField.becomeFirstResponder()
+                } else {
+                    textField.resignFirstResponder()
+                }
+            }
         }
         return true
+    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        if textField.tag == 100 {
+            return (textField.text?.utf16.count ?? 0) + string.utf16.count - range.length <= 8
+        }
+        if textField.tag == 101 {
+            return (textField.text?.utf16.count ?? 0) + string.utf16.count - range.length <= 4
+        }
+        return false
     }
 }

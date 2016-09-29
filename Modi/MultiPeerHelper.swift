@@ -27,13 +27,14 @@ class ModiBlueToothService: NSObject {
     
     var connectionSceneDelegate: ConnectionSceneDelegate?
     var gameSceneDelegate: GameSceneDelegate?
-    
+    var privateLobbyCode: String = GameStateSingleton.sharedInstance.bluetoothServiceName.lowercased() + "-modi"
     
     override init() {
         myPeerID = MCPeerID(displayName: GameStateSingleton.sharedInstance.deviceName)
-        self.serviceAdvertiser = MCNearbyServiceAdvertiser(peer: myPeerID, discoveryInfo: nil, serviceType: ModiServiceType)
-        self.serviceBrowser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: ModiServiceType)
+        self.serviceAdvertiser = MCNearbyServiceAdvertiser(peer: myPeerID, discoveryInfo: nil, serviceType: privateLobbyCode)
+        self.serviceBrowser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: privateLobbyCode)
         super.init()
+        print(privateLobbyCode)
         
         self.serviceAdvertiser.delegate = self
         self.serviceAdvertiser.startAdvertisingPeer()
@@ -57,11 +58,9 @@ class ModiBlueToothService: NSObject {
         if session.connectedPeers.count > 0 {
             var error : NSError?
             do {
+                //If connnected Devices Peers == GS.orderedPeers then send
                 try self.session.send(string.data(using: String.Encoding.utf8, allowLossyConversion: false)!, toPeers: session.connectedPeers, with: MCSessionSendDataMode.reliable)
-                    // If session.connectedPeers.count != GameStateSingleton.sharedInstance().orderedPlayers.count {
-                    //      See who is missing and save them in an instance variable of Modibluetooth
-                    //      When connectedDevicesDidChange, if one of the people who were missing are now connected, send them the message.
-                    // }
+                // Else change update label to "waitingFor \(missingPeers)..."
             } catch let error1 as NSError {
                 error = error1
                 print("%@", "\(error)")
@@ -114,17 +113,6 @@ class ModiBlueToothService: NSObject {
         gameSceneDelegate?.updateLabel("\(player1.name) traded cards with \(player2.name)")
     }
     
-    func sendRecieptConfirmation(message: String, toPeer: MCPeerID) {
-        if session.connectedPeers.count > 0 {
-            var error : NSError?
-            do {
-                try self.session.send("confirmation\(message)".data(using: String.Encoding.utf8, allowLossyConversion: false)!, toPeers: [toPeer], with: MCSessionSendDataMode.reliable)
-            } catch let error1 as NSError {
-                error = error1
-                print("%@", "\(error)")
-            }
-        }
-    }
     
 }
 
@@ -133,31 +121,9 @@ extension ModiBlueToothService: MCNearbyServiceAdvertiserDelegate {
         print("Did not start advertising peer: \(error)")
     }
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        
         print("Did recieve invitation from \(peerID.displayName)")
-        
-        let isAlreadyPartOfGame: Bool = {
-            for player in GameStateSingleton.sharedInstance.orderedPlayers {
-                if player.peerID == peerID {
-                    return true
-                }
-            }
-            return false
-        }()
-        
-        let isntConnected: Bool = {
-            for peer in session.connectedPeers {
-                if peer == peerID {
-                    return false
-                }
-            }
-            return true
-        }()
-        
-        if GameStateSingleton.sharedInstance.currentGameState == .waitingForPlayers || (isAlreadyPartOfGame && isntConnected) {
-            print("Accepting invitation from \(peerID.displayName)")
-            invitationHandler(true, self.session)
-        }
+        print("Accepting invitation from \(peerID.displayName)")
+        invitationHandler(true, self.session)
     }
 }
 
@@ -213,21 +179,17 @@ extension ModiBlueToothService: MCSessionDelegate {
         let str = NSString(data: data, encoding: String.Encoding.utf8.rawValue) as! String
         
         if str == "gametime" {
-            self.sendRecieptConfirmation(message: "gametime", toPeer: peerID)
             connectionSceneDelegate?.gotoGame()
         }
         if str == "dealCards" {
-            self.sendRecieptConfirmation(message: "dealCards", toPeer: peerID)
             gameSceneDelegate?.dealPeersCards()
         }
 
         if str == "trash" {
-            self.sendRecieptConfirmation(message: "trash", toPeer: peerID)
             gameSceneDelegate?.trashCards()
         }
         
         if str == "endRound" {
-            self.sendRecieptConfirmation(message: "endRound", toPeer: peerID)
             gameSceneDelegate?.endRound()
         }
         
@@ -279,10 +241,6 @@ extension ModiBlueToothService: MCSessionDelegate {
                 self.handleCardSwapUsingString(string)
             }
             
-            if str.substring(to: str.characters.index(str.startIndex, offsetBy: 12)) == "confirmation" {
-                let message = str.replacingOccurrences(of: "confirmation", with: "")
-                print("Recieved confirmation of \(message) from \(peerID.displayName)")
-            }
             
             if str.substring(to: str.characters.index(str.startIndex, offsetBy: 13)) == "currentDealer" {
                 let currentDealerName = str.replacingOccurrences(of: "currentDealer", with: "")
@@ -302,8 +260,7 @@ extension ModiBlueToothService: MCSessionDelegate {
             serviceBrowser.invitePeer(peerID, to: self.session, withContext: nil, timeout: 30)
         }
         self.connectionSceneDelegate?.connectedDevicesChanged(self, connectedDevices: session.connectedPeers.map({$0.displayName}))
-        if GameStateSingleton.sharedInstance.currentGameState == .waitingForPlayers {
-        }
+        
     }
     
     func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {

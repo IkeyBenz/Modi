@@ -20,6 +20,17 @@ class GameStateSingleton {
     
     var currentGameState: GameState = .waitingForPlayers
     var bluetoothService: ModiBlueToothService!
+    var bluetoothServiceName: String! {
+        didSet {
+            var replacementString: String = ""
+            for character in bluetoothServiceName.characters {
+                if character != " " {
+                    replacementString += String(character)
+                }
+            }
+            bluetoothServiceName = replacementString
+        }
+    }
     var deviceName: String = ""
     var orderedPlayers: [Player] = []
     var playersDictionary: [String : MCPeerID] = [:]
