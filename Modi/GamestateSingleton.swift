@@ -39,4 +39,17 @@ class GameStateSingleton {
     var currentDealer: Player!
     var playersStillInGame: [Player] = []
     
+    func reset() {
+        gameLoaded = false
+        currentGameState = .waitingForPlayers
+        bluetoothService = nil
+        bluetoothServiceName = ""
+        deviceName = ""
+        orderedPlayers = []
+        playersDictionary = [:]
+        myPlayer = nil
+        currentDealer = nil
+        playersStillInGame = []
+    }
+    
 }

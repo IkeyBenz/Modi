@@ -5,7 +5,7 @@ class ConnectionScene: SKScene {
     
     let globalFont: String = "Chalkboard SE"
     let startGamebutton = SKLabelNode(fontNamed: "Chalkboard SE")
-    var buttonImage = SKSpriteNode(imageNamed: "Button")
+    var startGameButtonImage = SKSpriteNode(imageNamed: "Button")
     var nameTextField: UITextField!
     var nameTextFieldStamp = SKLabelNode(fontNamed: "Chalkboard SE")
     var nameTextFieldImage = SKSpriteNode(imageNamed: "TextField")
@@ -20,6 +20,7 @@ class ConnectionScene: SKScene {
     var instructions = SKSpriteNode(imageNamed: "Felt")
     var instructionsButton = SKSpriteNode(imageNamed: "QuestionMark")
     var instructionsLabel: UILabel!
+    var restartButton = SKSpriteNode(imageNamed: "Restart Button")
     
     var peerOne = SKLabelNode()
     var peerTwo = SKLabelNode()
@@ -58,7 +59,7 @@ class ConnectionScene: SKScene {
         instructionsButton.yScale = 1.2
         instructionsButton.position = CGPoint(x: self.frame.maxX - (instructionsButton.frame.width / 2) - 5, y: self.frame.maxY - (instructionsButton.frame.height / 2) - 5)
         instructionsButton.zPosition = 80
-        self.addChild(instructionsButton)
+        //self.addChild(instructionsButton)
         
         
         
@@ -107,8 +108,9 @@ class ConnectionScene: SKScene {
         gameCodeTextFieldImage.zPosition = 11
         gameCodeTextFieldImage.xScale = ((frame.width * 0.85) - gameCodeTextFieldImage.frame.minX) / gameCodeTextFieldImage.frame.width
         
-        gameCodeTextField = UITextField(frame: CGRect(x: gameCodeLabel.frame.maxX + 20, y: frame.height - gameCodeLabel.position.y - 22, width: 400, height: 40))
-        gameCodeTextField.placeholder = "xyz"
+        gameCodeTextField = UITextField(frame: CGRect(x: gameCodeLabel.frame.maxX + 20, y:  frame.height - yourNameLabel.position.y - 22, width: 400, height: 40))
+        gameCodeTextField.frame.size = gameCodeTextFieldImage.frame.size
+        gameCodeTextField.placeholder = "wxyz"
         gameCodeTextField.font = UIFont(name: "Chalkboard SE", size: self.fontSize)
         gameCodeTextField.textColor = UIColor.white
         gameCodeTextField.delegate = self
@@ -140,12 +142,12 @@ class ConnectionScene: SKScene {
         else if UIDevice.current.userInterfaceIdiom == .pad {waitingForPlayersLabel.fontSize = 20; self.fontSize = 30; yourNameLabel.fontSize = 18; nameTextField.minimumFontSize = 18; nameTextFieldStamp.fontSize = 18; startGamebutton.fontSize = 35}
 
         
-        buttonImage.zPosition = 10
-        buttonImage.centerRect = CGRect(x: 17.0/62.0, y: 17.0/74.0, width: 28.0/62.0, height: 39.0/74.0)
-        buttonImage.anchorPoint = CGPoint(x: 0.5, y: 0.3)
-        buttonImage.xScale = startGamebutton.frame.width / buttonImage.frame.width + 1
-        buttonImage.yScale = startGamebutton.frame.height / buttonImage.frame.height + 0.5
-        buttonImage.position = CGPoint(x: startGamebutton.position.x, y: startGamebutton.position.y + 2)
+        startGameButtonImage.zPosition = 10
+        startGameButtonImage.centerRect = CGRect(x: 17.0/62.0, y: 17.0/74.0, width: 28.0/62.0, height: 39.0/74.0)
+        startGameButtonImage.anchorPoint = CGPoint(x: 0.5, y: 0.3)
+        startGameButtonImage.xScale = startGamebutton.frame.width / startGameButtonImage.frame.width + 1
+        startGameButtonImage.yScale = startGamebutton.frame.height / startGameButtonImage.frame.height + 0.5
+        startGameButtonImage.position = CGPoint(x: startGamebutton.position.x, y: startGamebutton.position.y + 2)
         
         
         
@@ -159,7 +161,12 @@ class ConnectionScene: SKScene {
         positionPeerLabels()
         
         
+        if UIDevice.current.userInterfaceIdiom == .pad {restartButton.xScale = 1.5; restartButton.yScale = 1.5}
+        restartButton.position = CGPoint(x: (restartButton.frame.width / 2) + 5, y: frame.height - (restartButton.frame.height / 2) - 5)
+        restartButton.zPosition = 11
         
+        
+        self.addChild(restartButton)
         self.addChild(yourNameLabel)
         self.addChild(nameTextFieldStamp)
         self.addChild(nameTextFieldImage)
@@ -167,7 +174,7 @@ class ConnectionScene: SKScene {
         self.addChild(waitingForPlayersLabel)
         self.addChild(background)
         self.addChild(startGamebutton)
-        self.addChild(buttonImage)
+        self.addChild(startGameButtonImage)
         self.addChild(gameCodeLabel)
         self.addChild(gameCodeTextFieldStamp)
         self.addChild(gameCodeTextFieldImage)
@@ -222,32 +229,36 @@ class ConnectionScene: SKScene {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
-            if buttonImage.frame.contains(touch.location(in: self)) {
+            if startGameButtonImage.frame.contains(touch.location(in: self)) {
                 if GameStateSingleton.sharedInstance.bluetoothService == nil {
                     let moveUp = SKAction.moveBy(x: 0, y: 10, duration: 0.15)
                     let moveDown = SKAction.moveBy(x: 0, y: -10, duration: 0.15)
                     waitingForPlayersLabel.run(SKAction.sequence([moveUp, moveDown]))
                 } else {
-                    buttonImage.texture = SKTexture(imageNamed: "ButtonPressed")
+                    startGameButtonImage.texture = SKTexture(imageNamed: "ButtonPressed")
                 }
             }
-            if instructionsButton.frame.contains(touch.location(in: self)) {
-                if instructions.isHidden {
-                    instructions.isHidden = false
-                    self.view?.addSubview(instructionsLabel)
-                    instructionsButton.texture = SKTexture(imageNamed: "ExitButton")
-                } else if !instructions.isHidden {
-                    instructions.isHidden = true
-                    instructionsLabel.removeFromSuperview()
-                    instructionsButton.texture = SKTexture(imageNamed: "QuestionMark")
-                }
+//            if instructionsButton.frame.contains(touch.location(in: self)) {
+//                if instructions.isHidden {
+//                    instructions.isHidden = false
+//                    self.view?.addSubview(instructionsLabel)
+//                    instructionsButton.texture = SKTexture(imageNamed: "ExitButton")
+//                } else if !instructions.isHidden {
+//                    instructions.isHidden = true
+//                    instructionsLabel.removeFromSuperview()
+//                    instructionsButton.texture = SKTexture(imageNamed: "QuestionMark")
+//                }
+//            }
+            
+            if restartButton.frame.contains(touch.location(in: self)) {
+                self.restart()
             }
         }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
-            if startGamebutton.frame.contains(touch.location(in: self)) {
+            if startGameButtonImage.frame.contains(touch.location(in: self)) {
                 if GameStateSingleton.sharedInstance.bluetoothService != nil {
                     GameStateSingleton.sharedInstance.bluetoothService.sendData(orderedPlayersString(), messageType: "playerOrderString")
                     GameStateSingleton.sharedInstance.bluetoothService.sendData("currentDealer\(GameStateSingleton.sharedInstance.bluetoothService.session.myPeerID.displayName)", messageType: "currentDealer")
@@ -256,7 +267,7 @@ class ConnectionScene: SKScene {
                     self.goToGameScene()
                 }
             }
-            buttonImage.texture = SKTexture(imageNamed: "Button")
+            startGameButtonImage.texture = SKTexture(imageNamed: "Button")
         }
     }
     func initializeBluetooth() {
@@ -267,7 +278,21 @@ class ConnectionScene: SKScene {
         GameStateSingleton.sharedInstance.bluetoothService.connectionSceneDelegate = self
         waitingForPlayersLabel.text = "Connecting To Nearby Players..."
     }
+    
+    func restart() {
+        if nameTextFieldStamp.text == nil || nameTextFieldStamp.text == "" {nameTextField.removeFromSuperview()}
+        if gameCodeTextFieldStamp.text == nil || gameCodeTextFieldStamp.text == "" {gameCodeTextField.removeFromSuperview()}
+        let skView = self.view! as SKView
+        let scene = ConnectionScene(fileNamed: "ConnectionScene")
+        skView.showsFPS = false
+        skView.showsNodeCount = false
+        scene?.scaleMode = .resizeFill
+        GameStateSingleton.sharedInstance.reset()
+        skView.presentScene(scene)
+    }
 }
+
+
 
 extension ConnectionScene: ConnectionSceneDelegate {
     func connectedDevicesChanged(_ manager: ModiBlueToothService, connectedDevices: [String]) {

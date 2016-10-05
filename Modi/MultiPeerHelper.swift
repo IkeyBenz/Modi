@@ -180,29 +180,9 @@ extension ModiBlueToothService: MCNearbyServiceBrowserDelegate {
     }
     func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
         print("Found peer: \(peerID.displayName)")
+        print("Sending invite to: \(peerID.displayName)")
+        browser.invitePeer(peerID, to: self.session, withContext: nil, timeout: 30)
         
-        let isAlreadyPartOfGame: Bool = {
-            for player in GameStateSingleton.sharedInstance.orderedPlayers {
-                if player.name == peerID.displayName {
-                    return true
-                }
-            }
-            return false
-        }()
-        
-        let isntConnected: Bool = {
-            for peer in session.connectedPeers {
-                if peer.displayName == peerID.displayName {
-                    return false
-                }
-            }
-            return true
-        }()
-        
-        if GameStateSingleton.sharedInstance.currentGameState == .waitingForPlayers || (isAlreadyPartOfGame && isntConnected) {
-            print("Sending invite to: \(peerID.displayName)")
-            browser.invitePeer(peerID, to: self.session, withContext: nil, timeout: 30)
-        }
     }
     func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         print("Lost peer: \(peerID.displayName)")
@@ -232,7 +212,6 @@ extension ModiBlueToothService: MCSessionDelegate {
         if str == "dealCards" {
             gameSceneDelegate?.dealPeersCards()
         }
-
         if str == "trash" {
             gameSceneDelegate?.trashCards()
         }

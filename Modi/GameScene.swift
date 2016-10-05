@@ -50,6 +50,7 @@ class GameScene: SKScene {
         didSet {
             if isWaitingToDealCards && !isStillLoadingCards {
                 self.dealCards()
+                isWaitingToDealCards = false
             }
         }
     }
@@ -100,8 +101,6 @@ class GameScene: SKScene {
         background.position = CGPoint(x: frame.midX, y: frame.midY)
         
         
-        //let threePercentWidth = self.frame.maxX * 0.03
-        
         let referenceCard = Card(suit: "spades", readableRank: "Ace", rank: 1)
         referenceCard.size = resizeCard(referenceCard)
         
@@ -135,6 +134,15 @@ class GameScene: SKScene {
         stickButton.zPosition = 1.0
         setupButton(tradeButtonImage, buttonLabel: tradeButton)
         setupButton(stickButtonImage, buttonLabel: stickButton)
+        self.addChild(tradeButton)
+        self.addChild(stickButton)
+        self.addChild(tradeButtonImage)
+        self.addChild(stickButtonImage)
+        tradeButton.isHidden = true
+        tradeButtonImage.isHidden = true
+        stickButton.isHidden = true
+        stickButtonImage.isHidden = true
+        
         
         roundLabel.text = "Round 1"
         roundLabel.position = CGPoint(x: frame.maxX / 2, y: frame.maxY / 2)
@@ -300,7 +308,7 @@ class GameScene: SKScene {
                 }
             }
             
-            if dealButtonImage.frame.contains(touch.location(in: self)) {
+            if dealButtonImage.frame.contains(touch.location(in: self)) && GS.currentDealer.peerID == self.myPlayer.peerID && dealButtonImage.parent == self {
                 dealCards()
                 GS.bluetoothService.sendData("dealCards", messageType: "dealCards")
                 dealButton.removeFromParent()
